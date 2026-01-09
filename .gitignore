@@ -1,0 +1,36 @@
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+target/
+build/
+dist/
+*.class
+*.jar
+*.war
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Environment
+.env
+.env.local
+*.log
+
+# Databases
+*.db
+*.sqlite
+
+# Compiled files
+*.pyc
+__pycache__/
