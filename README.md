@@ -1,6 +1,6 @@
 # 🚀 BrewAlgo
 
-> **A production-grade full-stack algorithmic problem-solving platform**
+> **Scalable full-stack competitive programming platform (actively evolving)”**
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-19.2.0-blue.svg)](https://reactjs.org/)
