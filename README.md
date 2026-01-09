@@ -9,8 +9,6 @@
 
 Master algorithmic problem-solving with our interactive platform. Compete in live contests, track your progress, and climb the global leaderboard! 🏆
 
-![BrewAlgo Banner](https://via.placeholder.com/1200x400/667eea/ffffff?text=BrewAlgo+-+Code+•+Compete+•+Conquer)
-
 ---
 
 ## ✨ Features
