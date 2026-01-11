@@ -1,4 +1,4 @@
-# 🚀 BrewAlgo
+# BrewAlgo
 
 > **Scalable full-stack competitive programming platform (actively evolving)”**
 
