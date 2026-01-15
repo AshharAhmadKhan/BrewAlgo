@@ -1,36 +1,57 @@
-# IDEs
+# Maven
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# Gradle
+backend/.gradle/
+backend/build/
+
+# IntelliJ IDEA
 .idea/
-.vscode/
 *.iml
-*.ipr
 *.iws
+*.ipr
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# VS Code
+.vscode/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Build artifacts
-target/
-build/
-dist/
-*.class
-*.jar
-*.war
-
-# Dependencies
-node_modules/
-.pnp/
-.pnp.js
-
 # Environment
 .env
 .env.local
-*.log
 
-# Databases
+# Database
 *.db
-*.sqlite
 
-# Compiled files
-*.pyc
-__pycache__/
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Docker
+.dockerignore

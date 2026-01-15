@@ -44,7 +44,22 @@ const ProblemDetail = () => {
     setError('');
     try {
       const result = await problemService.submitSolution(user.id, problem.id, code, language);
-      setSubmission(result);
+      
+      // FIX: Extract executionResult from the response
+      const executionResult = result.executionResult || {};
+      const submissionData = result.submission || {};
+      
+      // Combine both for display
+      setSubmission({
+        status: executionResult.status || submissionData.status,
+        executionTimeMs: executionResult.executionTimeMs,
+        memoryUsedKb: executionResult.memoryUsedKb,
+        scoreAwarded: submissionData.scoreAwarded,
+        errorMessage: executionResult.errorMessage,
+        output: executionResult.output,
+        passedTestCases: executionResult.passedTestCases,
+        totalTestCases: executionResult.totalTestCases
+      });
     } catch (err) {
       setError('Failed to submit solution.');
     } finally {
@@ -127,21 +142,43 @@ const ProblemDetail = () => {
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <span className="text-gray-600">Status:</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${STATUS_COLORS[submission.status]}`}>
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${STATUS_COLORS[submission.status] || 'bg-gray-200 text-gray-800'}`}>
                   {submission.status}
                 </span>
               </div>
+              
+              {submission.passedTestCases !== undefined && submission.totalTestCases !== undefined && (
+                <p className="text-gray-600">
+                  Test Cases: {submission.passedTestCases}/{submission.totalTestCases} passed
+                </p>
+              )}
+              
               {submission.executionTimeMs && (
                 <p className="text-gray-600">Execution Time: {submission.executionTimeMs}ms</p>
               )}
+              
               {submission.memoryUsedKb && (
                 <p className="text-gray-600">Memory Used: {submission.memoryUsedKb}KB</p>
               )}
+              
               {submission.scoreAwarded > 0 && (
                 <p className="text-green-600 font-semibold">Score: {submission.scoreAwarded} pts</p>
               )}
+              
+              {submission.output && (
+                <div className="mt-2">
+                  <p className="text-gray-600 font-semibold">Output:</p>
+                  <pre className="bg-white p-2 rounded border text-sm">{submission.output}</pre>
+                </div>
+              )}
+              
               {submission.errorMessage && (
-                <p className="text-red-600">{submission.errorMessage}</p>
+                <div className="mt-2">
+                  <p className="text-red-600 font-semibold">Error:</p>
+                  <pre className="bg-red-50 p-2 rounded border border-red-200 text-sm text-red-800">
+                    {submission.errorMessage}
+                  </pre>
+                </div>
               )}
             </div>
           </div>

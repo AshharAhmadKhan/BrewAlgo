@@ -19,10 +19,12 @@
     <description>Algorithmic problem-solving platform backend</description>
 
     <properties>
-        <java.version>17</java.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-    </properties>
+    <java.version>17</java.version>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <httpclient5.version>5.3.1</httpclient5.version>
+    <httpcore5.version>5.3.1</httpcore5.version>
+</properties>
 
     <dependencies>
     <!-- Spring Boot Web -->
@@ -84,7 +86,7 @@
     <dependency>
         <groupId>com.github.docker-java</groupId>
         <artifactId>docker-java</artifactId>
-        <version>3.3.4</version>
+        <version>3.4.0</version>
         <exclusions>
             <exclusion>
                 <groupId>com.fasterxml.jackson.module</groupId>
@@ -95,7 +97,7 @@
     <dependency>
         <groupId>com.github.docker-java</groupId>
         <artifactId>docker-java-transport-httpclient5</artifactId>
-        <version>3.3.4</version>
+        <version>3.4.0</version>
     </dependency>
 
     <!-- JWT Library -->

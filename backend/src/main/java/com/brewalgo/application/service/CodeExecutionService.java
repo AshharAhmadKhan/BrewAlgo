@@ -7,6 +7,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.WaitContainerResultCallback;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -46,6 +48,7 @@ public class CodeExecutionService {
 
     public ExecutionResult executeCode(Long problemId, String code, String language) {
         log.info("Executing code for problem {} in language {}", problemId, language);
+        log.debug("Code to execute: {}", code);
         
         List<TestCase> testCases = testCaseRepository.findByProblemIdOrderByOrderIndex(problemId);
         
@@ -58,6 +61,7 @@ public class CodeExecutionService {
         
         for (TestCase testCase : testCases) {
             try {
+                log.debug("Running test case with input: {}", testCase.getInput());
                 ExecutionResult result = runSingleTestCase(code, language, testCase);
                 
                 if ("ACCEPTED".equals(result.getStatus())) {
@@ -74,7 +78,7 @@ public class CodeExecutionService {
                 }
                 
             } catch (Exception e) {
-                log.error("Error executing test case", e);
+                log.error("Error executing test case: " + e.getMessage(), e);
                 return new ExecutionResult("RUNTIME_ERROR", null, e.getMessage(), 0L, 0L, passedTests, testCases.size());
             }
         }
@@ -89,12 +93,17 @@ public class CodeExecutionService {
         Path workDir = Path.of(tempDir, "brewalgo", executionId);
         Files.createDirectories(workDir);
 
+        log.debug("Created work directory: {}", workDir);
+
         try {
             long startTime = System.currentTimeMillis();
             
             String imageName;
             String[] command;
             String fileName;
+
+            // Write input to file
+            Files.writeString(workDir.resolve("input.txt"), testCase.getInput());
 
             if ("JAVA".equalsIgnoreCase(language)) {
                 imageName = "brewalgo-java-executor:latest";
@@ -103,7 +112,7 @@ public class CodeExecutionService {
                 try (FileWriter writer = new FileWriter(codeFile)) {
                     writer.write(code);
                 }
-                command = new String[]{"sh", "-c", "javac Solution.java && echo '" + testCase.getInput() + "' | java Solution"};
+                command = new String[]{"sh", "-c", "javac Solution.java 2> compile_error.txt && java Solution < input.txt || (cat compile_error.txt && exit 1)"};
             } else if ("PYTHON".equalsIgnoreCase(language)) {
                 imageName = "brewalgo-python-executor:latest";
                 fileName = "solution.py";
@@ -111,11 +120,13 @@ public class CodeExecutionService {
                 try (FileWriter writer = new FileWriter(codeFile)) {
                     writer.write(code);
                 }
-                command = new String[]{"sh", "-c", "echo '" + testCase.getInput() + "' | python solution.py"};
+                command = new String[]{"sh", "-c", "python solution.py < input.txt"};
             } else {
                 return new ExecutionResult("ERROR", null, "Unsupported language: " + language, 0L, 0L, 0, 0);
             }
 
+            log.debug("Creating container with image: {}", imageName);
+            
             // Create container
             CreateContainerResponse container = dockerClient.createContainerCmd(imageName)
                 .withHostConfig(HostConfig.newHostConfig()
@@ -126,8 +137,11 @@ public class CodeExecutionService {
                 .withWorkingDir("/app")
                 .exec();
 
+            log.debug("Container created with ID: {}", container.getId());
+
             // Start container
             dockerClient.startContainerCmd(container.getId()).exec();
+            log.debug("Container started");
 
             // Wait for completion with timeout
             Integer statusCode = dockerClient.waitContainerCmd(container.getId())
@@ -135,17 +149,27 @@ public class CodeExecutionService {
                 .awaitStatusCode(TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
 
             long executionTime = System.currentTimeMillis() - startTime;
+            log.debug("Container finished with status code: {}, execution time: {}ms", statusCode, executionTime);
 
-            // Get logs
-            String output = dockerClient.logContainerCmd(container.getId())
+            // Get logs - FIXED VERSION
+            StringBuilder outputBuilder = new StringBuilder();
+            dockerClient.logContainerCmd(container.getId())
                 .withStdOut(true)
                 .withStdErr(true)
-                .exec(new com.github.dockerjava.api.async.ResultCallback.Adapter<>())
-                .awaitCompletion()
-                .toString().trim();
+                .exec(new com.github.dockerjava.api.async.ResultCallback.Adapter<Frame>() {
+                    @Override
+                    public void onNext(Frame frame) {
+                        outputBuilder.append(new String(frame.getPayload(), StandardCharsets.UTF_8));
+                    }
+                })
+                .awaitCompletion();
+
+            String output = outputBuilder.toString().trim();
+            log.debug("Container output: {}", output);
 
             // Cleanup container
             dockerClient.removeContainerCmd(container.getId()).withForce(true).exec();
+            log.debug("Container removed");
 
             // Check result
             if (statusCode == null) {
@@ -153,11 +177,21 @@ public class CodeExecutionService {
             }
 
             if (statusCode != 0) {
+                // Check if it's a compilation error
+                if (output.contains("error:") || output.contains("Error") || output.contains("Exception")) {
+                    return new ExecutionResult("COMPILATION_ERROR", output, "Compilation failed", executionTime, 0L, 0, 0);
+                }
                 return new ExecutionResult("RUNTIME_ERROR", output, "Non-zero exit code: " + statusCode, executionTime, 0L, 0, 0);
             }
 
+            // Normalize output for comparison
+            String normalizedOutput = normalizeOutput(output);
+            String normalizedExpected = normalizeOutput(testCase.getExpectedOutput());
+
+            log.debug("Normalized output: '{}', expected: '{}'", normalizedOutput, normalizedExpected);
+
             // Compare output
-            if (output.trim().equals(testCase.getExpectedOutput().trim())) {
+            if (normalizedOutput.equals(normalizedExpected)) {
                 return new ExecutionResult("ACCEPTED", output, null, executionTime, 0L, 0, 0);
             } else {
                 return new ExecutionResult("WRONG_ANSWER", output, "Expected: " + testCase.getExpectedOutput(), executionTime, 0L, 0, 0);
@@ -175,5 +209,9 @@ public class CodeExecutionService {
                     }
                 });
         }
+    }
+
+    private String normalizeOutput(String output) {
+        return output.trim().replaceAll("\\s+", " ");
     }
 }
