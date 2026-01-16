@@ -1,4 +1,4 @@
-# 🚀 BrewAlgo
+#  BrewAlgo
 
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
@@ -6,7 +6,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **A production-grade algorithmic problem-solving platform with Docker-isolated code execution**
+> **A competitive programming platform with secure, Docker-isolated code execution - built to learn system design and containerization**
 
 Master competitive programming with secure, real-time code evaluation. Built with Clean Architecture, featuring multi-language support and comprehensive test case validation.
 
