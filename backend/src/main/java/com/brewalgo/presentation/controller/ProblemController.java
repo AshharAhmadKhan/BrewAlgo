@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/problems")
+@RequestMapping("/api/v1/problems")
 @RequiredArgsConstructor
 @Slf4j
 public class ProblemController {

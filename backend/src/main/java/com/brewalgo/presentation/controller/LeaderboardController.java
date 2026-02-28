@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/leaderboard")
+@RequestMapping("/api/v1/leaderboard")
 @RequiredArgsConstructor
 @Slf4j
 public class LeaderboardController {

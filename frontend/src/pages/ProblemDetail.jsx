@@ -25,6 +25,21 @@ const ProblemDetail = () => {
     fetchProblem();
   }, [slug]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+Enter or Cmd+Enter to submit
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!submitting && code.trim()) {
+          handleSubmit();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [code, submitting]);
+
   const fetchProblem = async () => {
     setLoading(true);
     try {

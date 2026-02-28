@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/contests")
+@RequestMapping("/api/v1/contests")
 @RequiredArgsConstructor
 @Slf4j
 public class ContestController {

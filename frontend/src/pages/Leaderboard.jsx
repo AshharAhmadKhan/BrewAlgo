@@ -18,7 +18,7 @@ const Leaderboard = () => {
     setLoading(true);
     try {
       // This would call leaderboard API, using user service as placeholder
-      const response = await fetch('http://localhost:8081/api/users/top?limit=50');
+      const response = await fetch('http://localhost:8081/api/v1/users/top?limit=50');
       const data = await response.json();
       setUsers(data);
     } catch (err) {
