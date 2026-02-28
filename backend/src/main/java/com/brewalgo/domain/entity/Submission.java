@@ -41,11 +41,11 @@ public class Submission {
     private String code;
     
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private Language language;
     
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private Status status = Status.PENDING;
     
     @Column

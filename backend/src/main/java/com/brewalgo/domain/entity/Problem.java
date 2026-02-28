@@ -22,17 +22,17 @@ public class Problem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 100)
     private String slug;
     
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String title;
     
     @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
     
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private Difficulty difficulty;
     
     @Column(nullable = false)
