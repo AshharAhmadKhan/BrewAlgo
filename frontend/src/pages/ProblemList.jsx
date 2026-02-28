@@ -15,11 +15,13 @@ const ProblemList = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('title');
+  const [difficultyCounts, setDifficultyCounts] = useState({ EASY: 0, MEDIUM: 0, HARD: 0 });
   const { showToast } = useToast();
 
   useEffect(() => {
     fetchProblems();
-  }, [filter, currentPage]);
+  }, [filter, currentPage, sortBy]);
 
   useEffect(() => {
     // Reset to page 0 when search query changes
@@ -41,12 +43,22 @@ const ProblemList = () => {
         const result = await response.json();
         let problemsList = result.problems || [];
         
+        // Calculate difficulty counts
+        const counts = { EASY: 0, MEDIUM: 0, HARD: 0 };
+        problemsList.forEach(p => {
+          if (counts[p.difficulty] !== undefined) counts[p.difficulty]++;
+        });
+        setDifficultyCounts(counts);
+        
         // Apply client-side search filter
         if (searchQuery.trim()) {
           problemsList = problemsList.filter(p => 
             p.title.toLowerCase().includes(searchQuery.toLowerCase())
           );
         }
+        
+        // Apply sorting
+        problemsList = sortProblems(problemsList, sortBy);
         
         setProblems(problemsList);
         setTotalPages(result.totalPages || 0);
@@ -60,6 +72,9 @@ const ProblemList = () => {
             p.title.toLowerCase().includes(searchQuery.toLowerCase())
           );
         }
+        
+        // Apply sorting
+        data = sortProblems(data, sortBy);
         
         setProblems(data);
         setTotalPages(1);
@@ -75,6 +90,23 @@ const ProblemList = () => {
     }
   };
 
+  const sortProblems = (problemsList, sortOption) => {
+    const sorted = [...problemsList];
+    switch (sortOption) {
+      case 'title':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case 'difficulty':
+        const diffOrder = { EASY: 1, MEDIUM: 2, HARD: 3 };
+        return sorted.sort((a, b) => diffOrder[a.difficulty] - diffOrder[b.difficulty]);
+      case 'acceptance':
+        return sorted.sort((a, b) => b.acceptanceRate - a.acceptanceRate);
+      case 'score':
+        return sorted.sort((a, b) => b.baseScore - a.baseScore);
+      default:
+        return sorted;
+    }
+  };
+
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -83,7 +115,7 @@ const ProblemList = () => {
   if (loading) return <LoadingSkeleton count={5} type="table" />;
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto animate-fade-in">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-4">Problems</h1>
         
@@ -119,27 +151,58 @@ const ProblemList = () => {
         </div>
         
         {/* Filters */}
-        <div className="flex space-x-2 mb-6">
-          {['ALL', DIFFICULTY.EASY, DIFFICULTY.MEDIUM, DIFFICULTY.HARD].map((diff) => (
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex space-x-2">
             <button
-              key={diff}
-              onClick={() => setFilter(diff)}
+              onClick={() => setFilter('ALL')}
               className={`px-4 py-2 rounded-lg font-semibold transition ${
-                filter === diff
+                filter === 'ALL'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              {diff}
+              All
             </button>
-          ))}
+            {[DIFFICULTY.EASY, DIFFICULTY.MEDIUM, DIFFICULTY.HARD].map((diff) => (
+              <button
+                key={diff}
+                onClick={() => setFilter(diff)}
+                className={`px-4 py-2 rounded-lg font-semibold transition relative ${
+                  filter === diff
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {diff}
+                {filter === 'ALL' && difficultyCounts[diff] > 0 && (
+                  <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">
+                    {difficultyCounts[diff]}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Sort by:</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            >
+              <option value="title">Title</option>
+              <option value="difficulty">Difficulty</option>
+              <option value="acceptance">Acceptance Rate</option>
+              <option value="score">Score</option>
+            </select>
+          </div>
         </div>
 
         <ErrorMessage message={error} onClose={() => setError('')} />
       </div>
 
       {/* Problems Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-hidden animate-scale-in">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

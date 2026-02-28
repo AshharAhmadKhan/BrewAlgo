@@ -171,8 +171,8 @@ print("result")`;
   if (!problem) return <ErrorMessage message="Problem not found" />;
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
+    <div className="max-w-6xl mx-auto animate-fade-in">
+      <div className="bg-white rounded-lg shadow-lg p-8 mb-6 animate-scale-in">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold">{problem.title}</h1>
           <span className={`px-4 py-2 rounded-full font-semibold ${DIFFICULTY_COLORS[problem.difficulty]}`}>
@@ -200,7 +200,7 @@ print("result")`;
       </div>
 
       {/* Code Editor */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-white rounded-lg shadow-lg p-6 animate-scale-in" style={{ animationDelay: '0.1s' }}>
         <h2 className="text-2xl font-bold mb-4">Submit Solution</h2>
         
         {/* INPUT FORMAT GUIDE - NEW */}

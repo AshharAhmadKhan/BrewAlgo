@@ -40,8 +40,8 @@ const Profile = () => {
     : 0;
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
+    <div className="max-w-6xl mx-auto animate-fade-in">
+      <div className="bg-white rounded-lg shadow-lg p-8 mb-6 animate-scale-in">
         <div className="flex items-center space-x-6 mb-8">
           <div className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center text-white text-4xl font-bold">
             {user.username[0].toUpperCase()}
@@ -76,7 +76,7 @@ const Profile = () => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden animate-scale-in" style={{ animationDelay: '0.1s' }}>
         <div className="flex border-b">
           <button
             onClick={() => setActiveTab('overview')}
