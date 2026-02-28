@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { problemService } from '../services/problemService';
 import { DIFFICULTY, DIFFICULTY_COLORS } from '../utils/constants';
-import Loading from '../components/common/Loading';
+import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import ErrorMessage from '../components/common/ErrorMessage';
+import { useToast } from '../context/ToastContext';
 
 const ProblemList = () => {
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('ALL');
+  const { showToast } = useToast();
 
   useEffect(() => {
     fetchProblems();
@@ -27,14 +29,16 @@ const ProblemList = () => {
       }
       setProblems(data);
     } catch (err) {
-      setError('Failed to load problems. Please try again.');
+      const errorMsg = 'Failed to load problems. Please try again.';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <Loading />;
+  if (loading) return <LoadingSkeleton count={5} type="table" />;
 
   return (
     <div className="max-w-6xl mx-auto">

@@ -7,6 +7,8 @@ import com.brewalgo.domain.exception.BusinessException;
 import com.brewalgo.domain.repository.ProblemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -58,6 +60,7 @@ public class ProblemServiceImpl implements ProblemService {
     
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "problems", key = "#slug")
     public ProblemDTO getProblemBySlug(String slug) {
         Problem problem = problemRepository.findBySlug(slug)
             .orElseThrow(() -> BusinessException.notFound("Problem", slug));
@@ -109,6 +112,7 @@ public class ProblemServiceImpl implements ProblemService {
     
     @Override
     @Transactional
+    @CacheEvict(value = "problems", key = "#id")
     public ProblemDTO updateProblem(Long id, ProblemDTO problemDTO) {
         Problem problem = problemRepository.findById(id)
             .orElseThrow(() -> BusinessException.notFound("Problem", id));

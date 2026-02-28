@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { problemService } from '../services/problemService';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { LANGUAGES, DIFFICULTY_COLORS, STATUS_COLORS } from '../utils/constants';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
@@ -10,6 +11,7 @@ import Button from '../components/common/Button';
 const ProblemDetail = () => {
   const { slug } = useParams();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [problem, setProblem] = useState(null);
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState(LANGUAGES.JAVA);
@@ -29,7 +31,9 @@ const ProblemDetail = () => {
       const data = await problemService.getProblemBySlug(slug);
       setProblem(data);
     } catch (err) {
-      setError('Failed to load problem.');
+      const errorMsg = 'Failed to load problem.';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setLoading(false);
     }
@@ -37,7 +41,9 @@ const ProblemDetail = () => {
 
   const handleSubmit = async () => {
     if (!code.trim()) {
-      setError('Please enter your code');
+      const errorMsg = 'Please enter your code';
+      setError(errorMsg);
+      showToast(errorMsg, 'warning');
       return;
     }
 
@@ -61,8 +67,16 @@ const ProblemDetail = () => {
         passedTestCases: executionResult.passedTestCases,
         totalTestCases: executionResult.totalTestCases
       });
+      
+      if (executionResult.status === 'ACCEPTED') {
+        showToast('Solution accepted! 🎉', 'success');
+      } else {
+        showToast(`Submission ${executionResult.status.replace(/_/g, ' ')}`, 'error');
+      }
     } catch (err) {
-      setError('Failed to submit solution.');
+      const errorMsg = 'Failed to submit solution.';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setSubmitting(false);
     }

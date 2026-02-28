@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -26,6 +27,7 @@ public class ProblemController {
     private final ProblemService problemService;
     
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProblemDTO> createProblem(@RequestBody ProblemDTO problemDTO) {
         log.info("POST /api/problems - title: {}", problemDTO.getTitle());
         ProblemDTO created = problemService.createProblem(problemDTO);
@@ -105,6 +107,7 @@ public class ProblemController {
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProblemDTO> updateProblem(
             @PathVariable Long id,
             @RequestBody ProblemDTO problemDTO) {
@@ -114,6 +117,7 @@ public class ProblemController {
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteProblem(@PathVariable Long id) {
         log.info("DELETE /api/problems/{}", id);
         problemService.deleteProblem(id);

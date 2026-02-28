@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { authService } from '../services/authService';
-import Loading from '../components/common/Loading';
+import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import ErrorMessage from '../components/common/ErrorMessage';
+import { useToast } from '../context/ToastContext';
 
 const Leaderboard = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { showToast } = useToast();
 
   useEffect(() => {
     fetchLeaderboard();
@@ -20,14 +22,16 @@ const Leaderboard = () => {
       const data = await response.json();
       setUsers(data);
     } catch (err) {
-      setError('Failed to load leaderboard.');
+      const errorMsg = 'Failed to load leaderboard.';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <Loading />;
+  if (loading) return <LoadingSkeleton count={10} type="table" />;
 
   return (
     <div className="max-w-4xl mx-auto">

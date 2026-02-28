@@ -1,5 +1,7 @@
 package com.brewalgo.infrastructure.persistence;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.brewalgo.infrastructure.security.JwtUtil;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -143,6 +145,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "topUsers", key = "#limit")
     public List<UserDTO> getTopUsersByRating(int limit) {
         return userRepository.findTopUsersByRating(PageRequest.of(0, limit))
             .stream()
@@ -171,6 +174,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "topUsers", allEntries = true)
     public void updateUserRating(Long userId, int newRating) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> BusinessException.notFound("User", userId));

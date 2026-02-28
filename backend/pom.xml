@@ -147,6 +147,12 @@
         <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
 
+    <!-- Spring Cache -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-cache</artifactId>
+    </dependency>
+
     <!-- Spring Boot Test -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
