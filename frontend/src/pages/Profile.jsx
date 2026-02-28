@@ -2,6 +2,7 @@ import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../utils/constants';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
+import SkillRadar from '../components/effects/SkillRadar';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -103,6 +104,17 @@ const Profile = () => {
         <div className="p-6">
           {activeTab === 'overview' && (
             <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-bold mb-4">Skill Distribution</h2>
+                <div className="flex justify-center">
+                  <SkillRadar 
+                    easy={Math.floor(user.problemsSolved * 0.4)} 
+                    medium={Math.floor(user.problemsSolved * 0.35)} 
+                    hard={Math.floor(user.problemsSolved * 0.25)} 
+                  />
+                </div>
+              </div>
+
               <div>
                 <h2 className="text-xl font-bold mb-4">Submission Statistics</h2>
                 <div className="grid md:grid-cols-3 gap-4">
