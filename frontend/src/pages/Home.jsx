@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
+import ParticleBackground from '../components/effects/ParticleBackground';
+import CodeTypingAnimation from '../components/effects/CodeTypingAnimation';
 
 const Home = () => {
   const { isAuthenticated } = useAuth();
@@ -26,13 +28,16 @@ const Home = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4">
+    <div className="max-w-7xl mx-auto px-4 relative">
+      {/* Particle Background */}
+      <ParticleBackground />
+      
       {/* Hero Section with Rocket */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, ease: "easeOut" }}
-        className="text-center py-24 relative"
+        className="text-center py-24 relative z-10"
       >
         {/* Animated Rocket */}
         <motion.div
@@ -106,13 +111,23 @@ const Home = () => {
         )}
       </motion.div>
 
+      {/* Code Typing Animation */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1, duration: 0.8 }}
+        className="relative z-10"
+      >
+        <CodeTypingAnimation />
+      </motion.div>
+
       {/* Features Section */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
-        className="grid md:grid-cols-3 gap-10 py-20"
+        className="grid md:grid-cols-3 gap-10 py-20 relative z-10"
       >
         {[
           {
@@ -172,7 +187,7 @@ const Home = () => {
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8 }}
-        className="relative overflow-hidden glass-card rounded-3xl p-14 my-20 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white shadow-2xl"
+        className="relative overflow-hidden glass-card rounded-3xl p-14 my-20 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white shadow-2xl z-10"
       >
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
@@ -208,7 +223,7 @@ const Home = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center py-20"
+          className="text-center py-20 relative z-10"
         >
           <h2 className="text-5xl font-bold mb-8 gradient-text">Ready to Code?</h2>
           <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
@@ -242,7 +257,7 @@ const Home = () => {
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        className="text-center py-16 mt-20 border-t border-gray-200"
+        className="text-center py-16 mt-20 border-t border-gray-200 relative z-10"
       >
         <div className="mb-6">
           <p className="text-sm text-gray-500 uppercase tracking-wider mb-2">Developed By</p>

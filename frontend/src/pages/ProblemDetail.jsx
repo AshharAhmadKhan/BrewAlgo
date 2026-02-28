@@ -7,6 +7,7 @@ import { LANGUAGES, DIFFICULTY_COLORS, STATUS_COLORS } from '../utils/constants'
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import Button from '../components/common/Button';
+import Confetti from '../components/effects/Confetti';
 
 const ProblemDetail = () => {
   const { slug } = useParams();
@@ -20,6 +21,7 @@ const ProblemDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showInputGuide, setShowInputGuide] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     fetchProblem();
@@ -106,6 +108,7 @@ const ProblemDetail = () => {
       
       if (executionResult.status === 'ACCEPTED') {
         showToast('Solution accepted! 🎉', 'success');
+        setShowConfetti(true);
         // Clear saved draft on successful submission
         localStorage.removeItem(`code_${problem.id}_${language}`);
       } else {
@@ -172,6 +175,8 @@ print("result")`;
 
   return (
     <div className="max-w-6xl mx-auto animate-fade-in">
+      <Confetti active={showConfetti} onComplete={() => setShowConfetti(false)} />
+      
       <div className="bg-white rounded-lg shadow-lg p-8 mb-6 animate-scale-in">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold">{problem.title}</h1>
@@ -310,7 +315,7 @@ print("result")`;
 
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button onClick={handleSubmit} disabled={submitting || !code.trim()}>
+            <Button onClick={handleSubmit} disabled={submitting || !code.trim()} className="btn-pulse">
               {submitting ? (
                 <span className="flex items-center">
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
