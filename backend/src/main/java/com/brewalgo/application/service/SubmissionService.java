@@ -1,6 +1,8 @@
 package com.brewalgo.application.service;
 
 import com.brewalgo.application.dto.SubmissionDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface SubmissionService {
@@ -13,6 +15,8 @@ public interface SubmissionService {
     
     List<SubmissionDTO> getSubmissionsByUser(Long userId);
     
+    Page<SubmissionDTO> getSubmissionsByUserPageable(Long userId, Pageable pageable);
+    
     List<SubmissionDTO> getSubmissionsByProblem(Long problemId);
     
     List<SubmissionDTO> getSubmissionsByContest(Long contestId);
@@ -23,7 +27,6 @@ public interface SubmissionService {
     
     SubmissionDTO evaluateSubmission(Long submissionId);
     
-    // ADD THIS NEW METHOD
     void updateSubmissionStatus(Long submissionId, String status, Integer executionTime, Integer memoryUsed, String errorMessage);
     
     int calculateScore(Long problemId, Integer executionTime);

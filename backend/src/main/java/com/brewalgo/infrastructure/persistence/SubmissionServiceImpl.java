@@ -15,6 +15,8 @@ import com.brewalgo.domain.repository.SubmissionRepository;
 import com.brewalgo.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -114,6 +116,16 @@ public class SubmissionServiceImpl implements SubmissionService {
             .stream()
             .map(SubmissionDTO::fromEntity)
             .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SubmissionDTO> getSubmissionsByUserPageable(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> BusinessException.notFound("User", userId));
+
+        Page<Submission> submissionPage = submissionRepository.findByUser(user, pageable);
+        return submissionPage.map(SubmissionDTO::fromEntity);
     }
 
     @Override

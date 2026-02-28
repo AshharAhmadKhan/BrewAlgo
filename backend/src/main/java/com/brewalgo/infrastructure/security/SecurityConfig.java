@@ -50,6 +50,8 @@ public class SecurityConfig {
         .requestMatchers("/api/leaderboard/**").permitAll()
         .requestMatchers("/ws/**").permitAll()
         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+        .requestMatchers("/actuator/**").authenticated()
         .anyRequest().authenticated()
 )
                 .sessionManagement(session -> session

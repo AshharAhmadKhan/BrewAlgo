@@ -2,6 +2,8 @@ package com.brewalgo.application.service;
 
 import com.brewalgo.application.dto.ProblemDTO;
 import com.brewalgo.domain.entity.Problem;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface ProblemService {
@@ -13,6 +15,8 @@ public interface ProblemService {
     ProblemDTO getProblemBySlug(String slug);
     
     List<ProblemDTO> getAllProblems();
+    
+    Page<ProblemDTO> getAllProblemsPageable(Pageable pageable);
     
     List<ProblemDTO> getProblemsByDifficulty(Problem.Difficulty difficulty);
     
