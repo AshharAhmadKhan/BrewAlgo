@@ -12,6 +12,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     
     private final LoggingInterceptor loggingInterceptor;
+    private final RateLimitInterceptor rateLimitInterceptor;
     
     @Value("${cors.allowed-origins}")
     private String[] allowedOrigins;
@@ -30,6 +31,12 @@ public class WebConfig implements WebMvcConfigurer {
     
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // Rate limiting - first interceptor
+        registry.addInterceptor(rateLimitInterceptor)
+                .addPathPatterns("/api/v1/**")
+                .excludePathPatterns("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**");
+        
+        // Logging - second interceptor
         registry.addInterceptor(loggingInterceptor)
                 .addPathPatterns("/api/v1/**")
                 .excludePathPatterns("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**");

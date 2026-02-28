@@ -47,6 +47,9 @@ public class Problem {
     @Column(nullable = false)
     private Integer successfulSubmissions = 0;
     
+    @Version
+    private Long version;
+    
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
     

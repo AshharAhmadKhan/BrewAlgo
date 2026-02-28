@@ -38,6 +38,9 @@ public class User {
     @Column(nullable = false)
     private Integer problemsSolved = 0;
     
+    @Version
+    private Long version;
+    
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
     
