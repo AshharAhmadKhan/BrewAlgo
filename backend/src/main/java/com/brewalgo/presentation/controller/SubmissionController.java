@@ -52,8 +52,8 @@ public class SubmissionController {
             request.getLanguage()
         );
         
-        // Execute code
-        ExecutionResult result = codeExecutionService.executeCode(
+        // Execute code asynchronously (but wait for result in this case)
+        ExecutionResult result = executeCodeAsync(
             request.getProblemId(), 
             request.getCode(), 
             request.getLanguage()
@@ -76,6 +76,21 @@ public class SubmissionController {
             "submission", updated,
             "executionResult", result
         ));
+    }
+    
+    private ExecutionResult executeCodeAsync(Long problemId, String code, String language) {
+        try {
+            // Execute with timeout
+            return codeExecutionService.executeCode(problemId, code, language);
+        } catch (Exception e) {
+            log.error("Code execution failed", e);
+            return ExecutionResult.builder()
+                .status("RUNTIME_ERROR")
+                .errorMessage("Execution failed: " + e.getMessage())
+                .executionTimeMs(0L)
+                .memoryUsedKb(0L)
+                .build();
+        }
     }
     
     @PostMapping("/contest")
