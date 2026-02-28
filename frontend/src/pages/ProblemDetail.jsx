@@ -25,6 +25,27 @@ const ProblemDetail = () => {
     fetchProblem();
   }, [slug]);
 
+  // Load saved code from localStorage
+  useEffect(() => {
+    if (problem) {
+      const savedCode = localStorage.getItem(`code_${problem.id}_${language}`);
+      if (savedCode) {
+        setCode(savedCode);
+      }
+    }
+  }, [problem, language]);
+
+  // Auto-save code to localStorage
+  useEffect(() => {
+    if (problem && code) {
+      const timeoutId = setTimeout(() => {
+        localStorage.setItem(`code_${problem.id}_${language}`, code);
+      }, 1000); // Debounce 1 second
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [code, problem, language]);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Ctrl+Enter or Cmd+Enter to submit
@@ -85,6 +106,8 @@ const ProblemDetail = () => {
       
       if (executionResult.status === 'ACCEPTED') {
         showToast('Solution accepted! 🎉', 'success');
+        // Clear saved draft on successful submission
+        localStorage.removeItem(`code_${problem.id}_${language}`);
       } else {
         showToast(`Submission ${executionResult.status.replace(/_/g, ' ')}`, 'error');
       }
@@ -95,6 +118,22 @@ const ProblemDetail = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(code);
+    showToast('Code copied to clipboard!', 'success');
+  };
+
+  const handleClearCode = () => {
+    if (code.trim() && !window.confirm('Are you sure you want to clear your code?')) {
+      return;
+    }
+    setCode('');
+    if (problem) {
+      localStorage.removeItem(`code_${problem.id}_${language}`);
+    }
+    showToast('Code cleared', 'info');
   };
 
   const getCodeTemplate = () => {
@@ -234,33 +273,67 @@ print("result")`;
           </select>
         </div>
 
-        <textarea
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          className="w-full h-64 p-4 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          placeholder="Write your solution here..."
-        />
-
-        <div className="mt-4 flex items-center space-x-4">
-          <Button onClick={handleSubmit} disabled={submitting || !code.trim()}>
-            {submitting ? (
-              <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Executing Code...
-              </span>
-            ) : (
-              'Submit Solution'
-            )}
-          </Button>
+        <div className="relative">
+          <textarea
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="w-full h-64 p-4 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            placeholder="Write your solution here..."
+          />
           
-          {submitting && (
-            <span className="text-sm text-gray-600">
-              ⏱️ This may take 3-5 seconds...
-            </span>
-          )}
+          {/* Code Editor Actions */}
+          <div className="absolute top-2 right-2 flex space-x-2">
+            <button
+              onClick={handleCopyCode}
+              disabled={!code.trim()}
+              className="px-3 py-1 bg-gray-700 text-white text-xs rounded hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+              title="Copy code"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <span>Copy</span>
+            </button>
+            <button
+              onClick={handleClearCode}
+              disabled={!code.trim()}
+              className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+              title="Clear code"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>Clear</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Button onClick={handleSubmit} disabled={submitting || !code.trim()}>
+              {submitting ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Executing Code...
+                </span>
+              ) : (
+                'Submit Solution'
+              )}
+            </Button>
+            
+            {submitting && (
+              <span className="text-sm text-gray-600">
+                ⏱️ This may take 3-5 seconds...
+              </span>
+            )}
+          </div>
+          
+          <div className="text-xs text-gray-500">
+            💾 Code auto-saved
+          </div>
         </div>
 
         {/* Submission Result - IMPROVED */}

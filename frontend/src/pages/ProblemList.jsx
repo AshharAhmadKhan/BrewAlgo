@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { problemService } from '../services/problemService';
-import { DIFFICULTY, DIFFICULTY_COLORS } from '../utils/constants';
+import { DIFFICULTY, DIFFICULTY_COLORS, API_BASE_URL } from '../utils/constants';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import ErrorMessage from '../components/common/ErrorMessage';
 import { useToast } from '../context/ToastContext';
@@ -11,11 +11,24 @@ const ProblemList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('ALL');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
   const { showToast } = useToast();
 
   useEffect(() => {
     fetchProblems();
-  }, [filter]);
+  }, [filter, currentPage]);
+
+  useEffect(() => {
+    // Reset to page 0 when search query changes
+    if (currentPage !== 0) {
+      setCurrentPage(0);
+    } else {
+      fetchProblems();
+    }
+  }, [searchQuery]);
 
   const fetchProblems = async () => {
     setLoading(true);
@@ -23,11 +36,35 @@ const ProblemList = () => {
     try {
       let data;
       if (filter === 'ALL') {
-        data = await problemService.getAllProblems();
+        // Use pagination API
+        const response = await fetch(`${API_BASE_URL}/problems?page=${currentPage}&size=20`);
+        const result = await response.json();
+        let problemsList = result.problems || [];
+        
+        // Apply client-side search filter
+        if (searchQuery.trim()) {
+          problemsList = problemsList.filter(p => 
+            p.title.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        }
+        
+        setProblems(problemsList);
+        setTotalPages(result.totalPages || 0);
+        setTotalItems(result.totalItems || 0);
       } else {
         data = await problemService.getProblemsByDifficulty(filter);
+        
+        // Apply client-side search filter
+        if (searchQuery.trim()) {
+          data = data.filter(p => 
+            p.title.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        }
+        
+        setProblems(data);
+        setTotalPages(1);
+        setTotalItems(data.length);
       }
-      setProblems(data);
     } catch (err) {
       const errorMsg = 'Failed to load problems. Please try again.';
       setError(errorMsg);
@@ -38,12 +75,48 @@ const ProblemList = () => {
     }
   };
 
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (loading) return <LoadingSkeleton count={5} type="table" />;
 
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-4">Problems</h1>
+        
+        {/* Search Bar */}
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search problems by title..."
+              className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+            <svg 
+              className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
         
         {/* Filters */}
         <div className="flex space-x-2 mb-6">
@@ -119,6 +192,50 @@ const ProblemList = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Showing {problems.length} of {totalItems} problems
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 0}
+              className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Previous
+            </button>
+            
+            {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+              const pageNum = currentPage < 3 ? idx : currentPage - 2 + idx;
+              if (pageNum >= totalPages) return null;
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`px-4 py-2 border rounded-lg ${
+                    currentPage === pageNum
+                      ? 'bg-blue-600 text-white'
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
+                  {pageNum + 1}
+                </button>
+              );
+            })}
+            
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages - 1}
+              className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
