@@ -2,12 +2,18 @@ package com.brewalgo.presentation.controller;
 
 import com.brewalgo.application.dto.ExecutionResult;
 import com.brewalgo.application.dto.SubmissionDTO;
+import com.brewalgo.application.dto.SubmissionRequest;
+import com.brewalgo.application.dto.UserDTO;
 import com.brewalgo.application.service.CodeExecutionService;
 import com.brewalgo.application.service.SubmissionService;
+import com.brewalgo.application.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,22 +27,32 @@ public class SubmissionController {
     
     private final SubmissionService submissionService;
     private final CodeExecutionService codeExecutionService;
+    private final UserService userService;
     
     @PostMapping
-    public ResponseEntity<Map<String, Object>> submitSolution(@RequestBody Map<String, Object> submission) {
-        log.info("POST /api/submissions - userId: {}, problemId: {}", 
-            submission.get("userId"), submission.get("problemId"));
+    public ResponseEntity<Map<String, Object>> submitSolution(@Valid @RequestBody SubmissionRequest request) {
+        // Extract userId from authenticated user
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        UserDTO user = userService.getUserByUsername(username);
+        Long userId = user.getId();
         
-        Long userId = Long.valueOf(submission.get("userId").toString());
-        Long problemId = Long.valueOf(submission.get("problemId").toString());
-        String code = submission.get("code").toString();
-        String language = submission.get("language").toString();
+        log.info("POST /api/submissions - userId: {}, problemId: {}", userId, request.getProblemId());
         
         // Create submission with PENDING status
-        SubmissionDTO created = submissionService.submitSolution(userId, problemId, code, language);
+        SubmissionDTO created = submissionService.submitSolution(
+            userId, 
+            request.getProblemId(), 
+            request.getCode(), 
+            request.getLanguage()
+        );
         
         // Execute code
-        ExecutionResult result = codeExecutionService.executeCode(problemId, code, language);
+        ExecutionResult result = codeExecutionService.executeCode(
+            request.getProblemId(), 
+            request.getCode(), 
+            request.getLanguage()
+        );
         
         // Update submission with result
         submissionService.updateSubmissionStatus(
@@ -58,20 +74,34 @@ public class SubmissionController {
     }
     
     @PostMapping("/contest")
-    public ResponseEntity<Map<String, Object>> submitContestSolution(@RequestBody Map<String, Object> submission) {
+    public ResponseEntity<Map<String, Object>> submitContestSolution(@Valid @RequestBody SubmissionRequest request) {
+        // Extract userId from authenticated user
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        UserDTO user = userService.getUserByUsername(username);
+        Long userId = user.getId();
+        
         log.info("POST /api/submissions/contest - userId: {}, problemId: {}, contestId: {}", 
-            submission.get("userId"), submission.get("problemId"), submission.get("contestId"));
+            userId, request.getProblemId(), request.getContestId());
         
-        Long userId = Long.valueOf(submission.get("userId").toString());
-        Long problemId = Long.valueOf(submission.get("problemId").toString());
-        Long contestId = Long.valueOf(submission.get("contestId").toString());
-        String code = submission.get("code").toString();
-        String language = submission.get("language").toString();
+        if (request.getContestId() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Contest ID is required"));
+        }
         
-        SubmissionDTO created = submissionService.submitContestSolution(userId, problemId, contestId, code, language);
+        SubmissionDTO created = submissionService.submitContestSolution(
+            userId, 
+            request.getProblemId(), 
+            request.getContestId(), 
+            request.getCode(), 
+            request.getLanguage()
+        );
         
         // Execute code
-        ExecutionResult result = codeExecutionService.executeCode(problemId, code, language);
+        ExecutionResult result = codeExecutionService.executeCode(
+            request.getProblemId(), 
+            request.getCode(), 
+            request.getLanguage()
+        );
         
         // Update submission with result
         submissionService.updateSubmissionStatus(

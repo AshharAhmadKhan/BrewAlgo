@@ -34,8 +34,8 @@ public class SecurityConfig {
                     var corsConfig = new org.springframework.web.cors.CorsConfiguration();
                     corsConfig.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
                     corsConfig.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                    corsConfig.setAllowedHeaders(java.util.List.of("*"));
-                    corsConfig.setAllowCredentials(true);
+                    corsConfig.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type"));
+                    corsConfig.setAllowCredentials(false);
                     return corsConfig;
                 }))
                 .authorizeHttpRequests(auth -> auth
@@ -45,9 +45,11 @@ public class SecurityConfig {
         .requestMatchers("/api/users/exists/**").permitAll()
         .requestMatchers("/api/users/top").permitAll()
         .requestMatchers("/api/problems/**").permitAll()
-        .requestMatchers("/api/submissions/**").permitAll()  // ADD THIS LINE
+        .requestMatchers("/api/submissions").authenticated()
+        .requestMatchers("/api/submissions/**").authenticated()
         .requestMatchers("/api/leaderboard/**").permitAll()
         .requestMatchers("/ws/**").permitAll()
+        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
         .anyRequest().authenticated()
 )
                 .sessionManagement(session -> session

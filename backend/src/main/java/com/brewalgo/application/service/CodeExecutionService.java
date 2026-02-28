@@ -78,7 +78,7 @@ public class CodeExecutionService {
                 }
                 
             } catch (Exception e) {
-                log.error("Error executing test case: " + e.getMessage(), e);
+                log.error("Error executing test case: {}", e.getMessage(), e);
                 return new ExecutionResult("RUNTIME_ERROR", null, e.getMessage(), 0L, 0L, passedTests, testCases.size());
             }
         }

@@ -103,11 +103,4 @@ public class UserController {
         userService.updateUserRating(id, ratingUpdate.get("rating"));
         return ResponseEntity.ok().build();
     }
-    // TEMPORARY - Remove after fixing passwords
-    @PostMapping("/generate-hash")
-    public ResponseEntity<Map<String, String>> generateHash(@RequestBody Map<String, String> request) {
-        String password = request.get("password");
-        String hash = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(password);
-        return ResponseEntity.ok(Map.of("password", password, "hash", hash));
-    }
 }

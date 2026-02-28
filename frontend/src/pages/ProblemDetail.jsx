@@ -213,7 +213,7 @@ print("result")`;
         />
 
         <div className="mt-4 flex items-center space-x-4">
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button onClick={handleSubmit} disabled={submitting || !code.trim()}>
             {submitting ? (
               <span className="flex items-center">
                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
