@@ -37,7 +37,6 @@ export const problemService = {
   // Submit solution
   submitSolution: async (userId, problemId, code, language) => {
     const response = await api.post(API_ENDPOINTS.SUBMISSIONS, {
-      userId,
       problemId,
       code,
       language,

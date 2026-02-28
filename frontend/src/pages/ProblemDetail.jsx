@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { problemService } from '../services/problemService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -115,7 +117,9 @@ const ProblemDetail = () => {
         showToast(`Submission ${executionResult.status.replace(/_/g, ' ')}`, 'error');
       }
     } catch (err) {
-      const errorMsg = 'Failed to submit solution.';
+      console.error('Submission error:', err);
+      console.error('Error response:', err.response);
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to submit solution.';
       setError(errorMsg);
       showToast(errorMsg, 'error');
     } finally {
@@ -191,9 +195,50 @@ print("result")`;
           <span>Submissions: {problem.totalSubmissions}</span>
         </div>
 
-        <div className="prose max-w-none mb-6">
-          <h3 className="text-xl font-semibold mb-2">Description</h3>
-          <p className="text-gray-700 whitespace-pre-wrap">{problem.description}</p>
+        <div className="prose prose-lg max-w-none mb-6">
+          <h3 className="text-xl font-semibold mb-4">Description</h3>
+          <div className="text-gray-700">
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                // Style code blocks - handle both inline and block code
+                code: ({node, inline, className, children, ...props}) => {
+                  return inline ? (
+                    <code className="bg-gray-100 text-red-600 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                      {children}
+                    </code>
+                  ) : (
+                    <code className="text-sm font-mono" {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+                // Style pre blocks (wraps code blocks)
+                pre: ({node, children, ...props}) => (
+                  <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4" {...props}>
+                    {children}
+                  </pre>
+                ),
+                // Style headings
+                h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-6 mb-3" {...props} />,
+                h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-5 mb-2" {...props} />,
+                h3: ({node, ...props}) => <h3 className="text-lg font-semibold mt-4 mb-2" {...props} />,
+                h4: ({node, ...props}) => <h4 className="text-base font-semibold mt-3 mb-2" {...props} />,
+                // Style lists
+                ul: ({node, ...props}) => <ul className="list-disc list-inside my-3 space-y-1" {...props} />,
+                ol: ({node, ...props}) => <ol className="list-decimal list-inside my-3 space-y-1" {...props} />,
+                li: ({node, ...props}) => <li className="ml-4" {...props} />,
+                // Style paragraphs
+                p: ({node, ...props}) => <p className="my-3 leading-relaxed" {...props} />,
+                // Style strong/bold
+                strong: ({node, ...props}) => <strong className="font-bold text-gray-900" {...props} />,
+                // Style links
+                a: ({node, ...props}) => <a className="text-blue-600 hover:text-blue-800 underline" {...props} />,
+              }}
+            >
+              {problem.description}
+            </ReactMarkdown>
+          </div>
         </div>
 
         {problem.hints && (

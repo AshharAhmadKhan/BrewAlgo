@@ -1,684 +1,641 @@
 # BrewAlgo - System Architecture
 
-**Version:** 1.0.0  
-**Last Updated:** January 15, 2026  
-**Author:** Ashhar Ahmad Khan
+## Table of Contents
+
+- [Overview](#overview)
+- [High-Level Architecture](#high-level-architecture)
+- [Clean Architecture Layers](#clean-architecture-layers)
+- [Component Diagram](#component-diagram)
+- [Data Flow](#data-flow)
+- [Security Architecture](#security-architecture)
+- [Deployment Architecture](#deployment-architecture)
+- [Technology Stack](#technology-stack)
 
 ---
 
-## 📋 **Table of Contents**
+## Overview
 
-1. [Overview](#overview)
-2. [Clean Architecture Layers](#clean-architecture-layers)
-3. [Component Diagram](#component-diagram)
-4. [Code Execution Flow](#code-execution-flow)
-5. [Security Architecture](#security-architecture)
-6. [Database Schema](#database-schema)
-7. [API Design](#api-design)
-8. [Design Patterns](#design-patterns)
-9. [Technology Decisions](#technology-decisions)
+BrewAlgo is built using **Clean Architecture** principles, ensuring separation of concerns, testability, and maintainability. The system consists of three main components:
+
+1. **Frontend (React)** - User interface and client-side logic
+2. **Backend (Spring Boot)** - Business logic and API
+3. **Docker Engine** - Isolated code execution environment
 
 ---
 
-## 🎯 **Overview**
+## High-Level Architecture
 
-BrewAlgo follows **Clean Architecture** principles (also known as Hexagonal Architecture or Ports & Adapters) to ensure:
-
-- **Framework Independence** - Business logic doesn't depend on Spring Boot
-- **Testability** - Core domain can be tested without external dependencies
-- **Maintainability** - Clear separation of concerns
-- **Flexibility** - Easy to swap implementations (e.g., PostgreSQL → MongoDB)
-
----
-
-## 🏗️ **Clean Architecture Layers**
 ```
-┌───────────────────────────────────────────────────────────┐
-│                   PRESENTATION LAYER                      │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  Controllers (REST Endpoints)                       │  │
-│  │  - ProblemController                                │  │
-│  │  - SubmissionController                             │  │
-│  │  - UserController                                   │  │
-│  │  - LeaderboardController                            │  │
-│  │  - ContestController                                │  │
-│  └─────────────────────────────────────────────────────┘  │
-│  Responsibilities:                                        │
-│  • Handle HTTP requests/responses                         │
-│  • Input validation                                       │
-│  • DTO conversion                                         │
-│  • Error handling                                         │
-└───────────────┬───────────────────────────────────────────┘
-                │ Calls
-┌───────────────▼───────────────────────────────────────────┐
-│                   APPLICATION LAYER                       │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  Services (Business Logic)                          │  │
-│  │  - ProblemService                                   │  │
-│  │  - SubmissionService                                │  │
-│  │  - CodeExecutionService  ← Core execution logic    │  │
-│  │  - UserService                                      │  │
-│  │  - LeaderboardService                               │  │
-│  └─────────────────────────────────────────────────────┘  │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  DTOs (Data Transfer Objects)                       │  │
-│  │  - ProblemDTO, SubmissionDTO, UserDTO, etc.        │  │
-│  └─────────────────────────────────────────────────────┘  │
-│  Responsibilities:                                        │
-│  • Orchestrate business operations                        │
-│  • Call domain entities                                   │
-│  • Coordinate with infrastructure                         │
-│  • Transaction management                                 │
-└───────────────┬───────────────────────────────────────────┘
-                │ Uses
-┌───────────────▼───────────────────────────────────────────┐
-│                     DOMAIN LAYER                          │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  Entities (Core Business Objects)                   │  │
-│  │  - Problem                                           │  │
-│  │  - Submission                                        │  │
-│  │  - User                                              │  │
-│  │  - TestCase                                          │  │
-│  │  - Contest                                           │  │
-│  └─────────────────────────────────────────────────────┘  │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  Repository Interfaces (Contracts)                  │  │
-│  │  - ProblemRepository                                 │  │
-│  │  - SubmissionRepository                              │  │
-│  │  - UserRepository                                    │  │
-│  └─────────────────────────────────────────────────────┘  │
-│  Responsibilities:                                        │
-│  • Define business rules                                  │
-│  • Encapsulate state                                      │
-│  • No dependencies on frameworks                          │
-└───────────────┬───────────────────────────────────────────┘
-                │ Implemented by
-┌───────────────▼───────────────────────────────────────────┐
-│                 INFRASTRUCTURE LAYER                      │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  Persistence (Database Implementation)              │  │
-│  │  - JPA Repository Implementations                   │  │
-│  │  - Spring Data JPA                                  │  │
-│  └─────────────────────────────────────────────────────┘  │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  Security                                            │  │
-│  │  - JwtAuthenticationFilter                          │  │
-│  │  - JwtTokenProvider                                 │  │
-│  │  - SecurityConfig                                   │  │
-│  └─────────────────────────────────────────────────────┘  │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  External Integrations                              │  │
-│  │  - Docker Java SDK                                  │  │
-│  │  - WebSocket Configuration                          │  │
-│  └─────────────────────────────────────────────────────┘  │
-│  Responsibilities:                                        │
-│  • Database access                                        │
-│  • Authentication/Authorization                           │
-│  • External API calls                                     │
-│  • Framework-specific code                               │
-└───────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🔄 **Component Diagram**
-```
-┌─────────────────────────────────────────────────────────────┐
-│                          FRONTEND                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ ProblemList  │  │ProblemDetail │  │ Leaderboard  │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-│         │                 │                  │              │
-│         └─────────────────┼──────────────────┘              │
-│                           │                                 │
-│                  ┌────────▼────────┐                        │
-│                  │  problemService │  (Axios HTTP client)   │
-│                  │  authService    │                        │
-│                  └────────┬────────┘                        │
-└───────────────────────────┼──────────────────────────────────┘
-                            │
-                            │ HTTP/REST + JWT
-                            │
-┌───────────────────────────▼──────────────────────────────────┐
-│                      BACKEND API LAYER                        │
-│  ┌──────────────────────────────────────────────────────┐    │
-│  │  @RestController                                     │    │
-│  │  - ProblemController      : GET /api/problems        │    │
-│  │  - SubmissionController   : POST /api/submissions    │    │
-│  │  - UserController         : POST /api/auth/login     │    │
-│  │  - LeaderboardController  : GET /api/leaderboard     │    │
-│  └──────────────────┬───────────────────────────────────┘    │
-│                     │                                         │
-│  ┌──────────────────▼───────────────────────────────────┐    │
-│  │  @Service (Business Logic)                           │    │
-│  │  - ProblemService                                    │    │
-│  │  - SubmissionService                                 │    │
-│  │  - CodeExecutionService  ← CORE LOGIC               │    │
-│  └──────────────────┬───────────────────────────────────┘    │
-│                     │                                         │
-│  ┌──────────────────▼───────────────────────────────────┐    │
-│  │  @Entity (JPA Entities)                              │    │
-│  │  - Problem, Submission, User, TestCase, Contest      │    │
-│  └──────────────────┬───────────────────────────────────┘    │
-│                     │                                         │
-│  ┌──────────────────▼───────────────────────────────────┐    │
-│  │  @Repository (Spring Data JPA)                       │    │
-│  │  - ProblemRepository                                 │    │
-│  │  - SubmissionRepository                              │    │
-│  └──────────────────┬───────────────────────────────────┘    │
-└────────────────────┼┼────────────────────────────────────────┘
-                     ││
-        ┌────────────┘└────────────┐
-        │                          │
-        │ JDBC                     │ Docker Java SDK
-        │                          │
-┌───────▼──────────┐    ┌──────────▼───────────────────────┐
-│   PostgreSQL     │    │       Docker Engine              │
-│                  │    │  ┌────────────────────────────┐  │
-│  Tables:         │    │  │  Container (per submission)│  │
-│  - users         │    │  │  - JDK 17 / Python 3.11   │  │
-│  - problems      │    │  │  - User code + input.txt  │  │
-│  - submissions   │    │  │  - CPU: 50%, RAM: 256MB   │  │
-│  - test_cases    │    │  │  - Timeout: 5 seconds     │  │
-│  - contests      │    │  └────────────────────────────┘  │
-└──────────────────┘    └──────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│                              CLIENT LAYER                                     │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                     React Frontend (Port 5173)                       │    │
+│  │                                                                       │    │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │    │
+│  │  │   Problem    │  │     Code     │  │  Leaderboard │              │    │
+│  │  │   Browser    │  │    Editor    │  │    View      │              │    │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘              │    │
+│  │                                                                       │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │              State Management (Context API)                   │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  │                                                                       │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │           API Client (Axios + JWT Interceptor)                │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+└───────────────────────────────────┬───────────────────────────────────────────┘
+                                    │
+                                    │ HTTPS/REST API
+                                    │ JWT Authentication
+                                    │
+┌───────────────────────────────────▼───────────────────────────────────────────┐
+│                                                                               │
+│                            APPLICATION LAYER                                  │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │              Spring Boot Backend (Port 8081)                         │    │
+│  │                                                                       │    │
+│  │  ┌─────────────────────────────────────────────────────────────┐    │    │
+│  │  │                  PRESENTATION LAYER                          │    │    │
+│  │  │                                                               │    │    │
+│  │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │    │    │
+│  │  │  │   Problem    │  │  Submission  │  │     User     │      │    │    │
+│  │  │  │  Controller  │  │  Controller  │  │  Controller  │      │    │    │
+│  │  │  └──────────────┘  └──────────────┘  └──────────────┘      │    │    │
+│  │  │                                                               │    │    │
+│  │  │  ┌────────────────────────────────────────────────────┐     │    │    │
+│  │  │  │  Global Exception Handler | Request/Response Log   │     │    │    │
+│  │  │  └────────────────────────────────────────────────────┘     │    │    │
+│  │  └─────────────────────────────────────────────────────────────┘    │    │
+│  │                              │                                        │    │
+│  │  ┌───────────────────────────▼───────────────────────────────────┐  │    │
+│  │  │                  APPLICATION LAYER                             │  │    │
+│  │  │                                                                 │  │    │
+│  │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │  │    │
+│  │  │  │   Problem    │  │  Submission  │  │     User     │        │  │    │
+│  │  │  │   Service    │  │   Service    │  │   Service    │        │  │    │
+│  │  │  └──────────────┘  └──────────────┘  └──────────────┘        │  │    │
+│  │  │                                                                 │  │    │
+│  │  │  ┌────────────────────────────────────────────────────┐       │  │    │
+│  │  │  │         Code Execution Service (Core Logic)         │       │  │    │
+│  │  │  │  - Docker container management                      │       │  │    │
+│  │  │  │  - Test case validation                             │       │  │    │
+│  │  │  │  - Multi-language support                           │       │  │    │
+│  │  │  └────────────────────────────────────────────────────┘       │  │    │
+│  │  │                                                                 │  │    │
+│  │  │  ┌────────────────────────────────────────────────────┐       │  │    │
+│  │  │  │              DTOs (Data Transfer Objects)           │       │  │    │
+│  │  │  └────────────────────────────────────────────────────┘       │  │    │
+│  │  └─────────────────────────────────────────────────────────────┘  │    │
+│  │                              │                                        │    │
+│  │  ┌───────────────────────────▼───────────────────────────────────┐  │    │
+│  │  │                     DOMAIN LAYER                               │  │    │
+│  │  │                                                                 │  │    │
+│  │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │  │    │
+│  │  │  │     User     │  │   Problem    │  │  Submission  │        │  │    │
+│  │  │  │    Entity    │  │    Entity    │  │    Entity    │        │  │    │
+│  │  │  └──────────────┘  └──────────────┘  └──────────────┘        │  │    │
+│  │  │                                                                 │  │    │
+│  │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │  │    │
+│  │  │  │     User     │  │   Problem    │  │  Submission  │        │  │    │
+│  │  │  │  Repository  │  │  Repository  │  │  Repository  │        │  │    │
+│  │  │  └──────────────┘  └──────────────┘  └──────────────┘        │  │    │
+│  │  │                                                                 │  │    │
+│  │  │  ┌────────────────────────────────────────────────────┐       │  │    │
+│  │  │  │          Business Exceptions & Rules                │       │  │    │
+│  │  │  └────────────────────────────────────────────────────┘       │  │    │
+│  │  └─────────────────────────────────────────────────────────────┘  │    │
+│  │                              │                                        │    │
+│  │  ┌───────────────────────────▼───────────────────────────────────┐  │    │
+│  │  │                 INFRASTRUCTURE LAYER                           │  │    │
+│  │  │                                                                 │  │    │
+│  │  │  ┌────────────────────────────────────────────────────┐       │  │    │
+│  │  │  │              Security Configuration                 │       │  │    │
+│  │  │  │  - JWT Authentication Filter                        │       │  │    │
+│  │  │  │  - Security Filter Chain                            │       │  │    │
+│  │  │  │  - Password Encoder (BCrypt)                        │       │  │    │
+│  │  │  └────────────────────────────────────────────────────┘       │  │    │
+│  │  │                                                                 │  │    │
+│  │  │  ┌────────────────────────────────────────────────────┐       │  │    │
+│  │  │  │           Persistence Implementation                │       │  │    │
+│  │  │  │  - JPA Repository Implementations                   │       │  │    │
+│  │  │  │  - Database Connection (HikariCP)                   │       │  │    │
+│  │  │  └────────────────────────────────────────────────────┘       │  │    │
+│  │  │                                                                 │  │    │
+│  │  │  ┌────────────────────────────────────────────────────┐       │  │    │
+│  │  │  │            Configuration & Middleware               │       │  │    │
+│  │  │  │  - CORS Configuration                               │       │  │    │
+│  │  │  │  - Rate Limiting                                    │       │  │    │
+│  │  │  │  - Logging Interceptor                              │       │  │    │
+│  │  │  │  - Audit Service                                    │       │  │    │
+│  │  │  └────────────────────────────────────────────────────┘       │  │    │
+│  │  └─────────────────────────────────────────────────────────────┘  │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+└───────────────┬───────────────────────────────────┬───────────────────────────┘
+                │                                   │
+                │ JDBC                              │ Docker Java SDK
+                │                                   │
+┌───────────────▼───────────────┐   ┌───────────────▼───────────────────────────┐
+│                               │   │                                           │
+│      DATA LAYER               │   │        EXECUTION LAYER                    │
+│                               │   │                                           │
+│  ┌─────────────────────────┐  │   │  ┌─────────────────────────────────────┐ │
+│  │   PostgreSQL Database   │  │   │  │         Docker Engine               │ │
+│  │                         │  │   │  │                                     │ │
+│  │  ┌──────────────────┐   │  │   │  │  ┌───────────────────────────────┐ │ │
+│  │  │  users           │   │  │   │  │  │  Java Executor Container      │ │ │
+│  │  │  problems        │   │  │   │  │  │  - OpenJDK 17                 │ │ │
+│  │  │  submissions     │   │  │   │  │  │  - Resource Limits            │ │ │
+│  │  │  test_cases      │   │  │   │  │  │  - 5s Timeout                 │ │ │
+│  │  │  contests        │   │  │   │  │  │  - Isolated Filesystem        │ │ │
+│  │  │  audit_logs      │   │  │   │  │  └───────────────────────────────┘ │ │
+│  │  └──────────────────┘   │  │   │  │                                     │ │
+│  │                         │  │   │  │  ┌───────────────────────────────┐ │ │
+│  │  ┌──────────────────┐   │  │   │  │  │  Python Executor Container    │ │ │
+│  │  │  Indexes         │   │  │   │  │  │  - Python 3.11                │ │ │
+│  │  │  Constraints     │   │  │   │  │  │  - Resource Limits            │ │ │
+│  │  │  Foreign Keys    │   │  │   │  │  │  - 5s Timeout                 │ │ │
+│  │  └──────────────────┘   │  │   │  │  │  - Isolated Filesystem        │ │ │
+│  └─────────────────────────┘  │   │  │  └───────────────────────────────┘ │ │
+│                               │   │  │                                     │ │
+│  Connection Pool: HikariCP    │   │  │  Container Lifecycle:               │ │
+│  Max Connections: 10          │   │  │  1. Create → 2. Start →            │ │
+│  Min Idle: 5                  │   │  │  3. Execute → 4. Stop →            │ │
+│                               │   │  │  5. Remove                          │ │
+└───────────────────────────────┘   └─────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔄 **Code Execution Flow (Detailed)**
+## Clean Architecture Layers
 
-### **Submission Journey: Frontend → Backend → Docker → Database**
+### 1. Presentation Layer (Controllers)
+
+**Responsibility:** Handle HTTP requests/responses, input validation, authentication
+
+**Components:**
+- `ProblemController` - Problem CRUD operations
+- `SubmissionController` - Code submission handling
+- `UserController` - User management
+- `LeaderboardController` - Rankings and statistics
+
+**Key Features:**
+- RESTful API design
+- JWT authentication
+- Request/Response DTOs
+- Global exception handling
+- Request logging
+
+### 2. Application Layer (Services)
+
+**Responsibility:** Business logic, orchestration, use cases
+
+**Components:**
+- `ProblemService` - Problem management logic
+- `SubmissionService` - Submission processing
+- `UserService` - User operations
+- `CodeExecutionService` - Core execution logic
+- `ContestService` - Contest management
+
+**Key Features:**
+- Transaction management
+- Business rule enforcement
+- DTO mapping
+- Service orchestration
+
+### 3. Domain Layer (Entities & Repositories)
+
+**Responsibility:** Core business entities, domain logic, data contracts
+
+**Components:**
+- **Entities:** User, Problem, Submission, TestCase, Contest, AuditLog
+- **Repositories:** Data access interfaces
+- **Exceptions:** Domain-specific exceptions
+- **Value Objects:** Immutable domain objects
+
+**Key Features:**
+- JPA entities
+- Repository interfaces
+- Domain exceptions
+- Business rules
+
+### 4. Infrastructure Layer (Implementation Details)
+
+**Responsibility:** External concerns, frameworks, tools
+
+**Components:**
+- **Security:** JWT, BCrypt, Spring Security
+- **Persistence:** JPA implementations, HikariCP
+- **Configuration:** CORS, Rate Limiting, Logging
+- **External Services:** Docker SDK integration
+
+**Key Features:**
+- Framework configurations
+- External API integrations
+- Security implementations
+- Database connections
+
+---
+
+## Component Diagram
+
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 1: User Submits Code                                  │
-└─────────────────────────────────────────────────────────────┘
-          │
-          │ 1. User clicks "Submit Solution"
-          │ 2. Frontend sends: { code, language, problemId }
-          │ 3. JWT token in Authorization header
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 2: API Gateway (Spring Security)                      │
-│  • JwtAuthenticationFilter validates token                  │
-│  • Extracts userId from JWT                                 │
-│  • Sets SecurityContext                                     │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 3: SubmissionController.submitSolution()              │
-│  • Validates input (not empty)                              │
-│  • Calls SubmissionService.submitSolution()                 │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 4: SubmissionService.submitSolution()                 │
-│  • Fetches User entity from database                        │
-│  • Fetches Problem entity from database                     │
-│  • Creates Submission entity (status: PENDING)              │
-│  • Saves to database (gets submission ID)                   │
-│  • Calls CodeExecutionService.executeCode()                 │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 5: CodeExecutionService.executeCode()                 │
-│  • Fetches test cases for the problem                       │
-│  • Loops through each test case:                            │
-│    FOR EACH test case:                                      │
-│      ├─ runSingleTestCase(code, language, testCase)        │
-│      ├─ If ACCEPTED: continue to next                       │
-│      └─ If failed: return immediately (early exit)          │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 6: runSingleTestCase() - Docker Setup                 │
-│  • Create temp directory: /tmp/brewalgo/{UUID}              │
-│  • Write code to: Solution.java or solution.py              │
-│  • Write input to: input.txt                                │
-│  • Build Docker command based on language:                  │
-│    - Java:   javac Solution.java && java Solution < input  │
-│    - Python: python solution.py < input.txt                │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 7: Docker Container Creation                          │
-│  dockerClient.createContainerCmd(imageName)                 │
-│    .withHostConfig(                                         │
-│      binds: [/tmp/brewalgo/{UUID}:/app]                    │
-│      memory: 256MB                                          │
-│      cpuQuota: 50000 (50%)                                  │
-│    )                                                        │
-│    .withCmd(command)                                        │
-│    .withWorkingDir("/app")                                  │
-│    .exec()                                                  │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 8: Container Execution                                │
-│  • dockerClient.startContainerCmd(containerId).exec()       │
-│  • Container runs isolated:                                 │
-│    - No network access                                      │
-│    - No host filesystem access (except /app bind mount)     │
-│    - Resource limits enforced                               │
-│  • dockerClient.waitContainerCmd(containerId)               │
-│    .awaitStatusCode(5, SECONDS)  ← Timeout                 │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 9: Output Capture                                     │
-│  StringBuilder outputBuilder = new StringBuilder();         │
-│  dockerClient.logContainerCmd(containerId)                  │
-│    .withStdOut(true)                                        │
-│    .withStdErr(true)                                        │
-│    .exec(new ResultCallback.Adapter<Frame>() {             │
-│      @Override                                              │
-│      public void onNext(Frame frame) {                      │
-│        outputBuilder.append(frame.getPayload());            │
-│      }                                                      │
-│    }).awaitCompletion();                                    │
-│  String output = outputBuilder.toString().trim();           │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 10: Status Determination                              │
-│  • If statusCode == null: TIME_LIMIT_EXCEEDED               │
-│  • If statusCode != 0:                                      │
-│    - If output contains "error:": COMPILATION_ERROR         │
-│    - Else: RUNTIME_ERROR                                    │
-│  • If statusCode == 0:                                      │
-│    - Normalize output & expected                            │
-│    - If equal: ACCEPTED                                     │
-│    - Else: WRONG_ANSWER                                     │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 11: Container Cleanup                                 │
-│  • dockerClient.removeContainerCmd(containerId)             │
-│    .withForce(true).exec()                                  │
-│  • Delete temp directory: /tmp/brewalgo/{UUID}              │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 12: Database Update                                   │
-│  • submissionService.updateSubmissionStatus(                │
-│    submissionId, status, executionTime, errorMessage        │
-│  )                                                          │
-│  • Update Submission entity in database                     │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 13: Response to Frontend                              │
-│  • Return SubmissionDTO with:                               │
-│    - submission { id, status, executionTime, ... }          │
-│    - executionResult { status, output, errorMessage, ... }  │
-│  • Frontend extracts executionResult.status                 │
-│  • Displays to user                                         │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        Frontend Components                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐     │
+│  │   Navbar     │    │  Auth Pages  │    │   Problem    │     │
+│  │  Component   │    │  - Login     │    │   List Page  │     │
+│  └──────────────┘    │  - Register  │    └──────────────┘     │
+│                      └──────────────┘                           │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐     │
+│  │   Problem    │    │  Leaderboard │    │    User      │     │
+│  │ Detail Page  │    │     Page     │    │   Profile    │     │
+│  └──────────────┘    └──────────────┘    └──────────────┘     │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │              Shared Components                          │    │
+│  │  - CodeEditor  - Toast  - LoadingSkeleton              │    │
+│  │  - ErrorBoundary  - ProtectedRoute                     │    │
+│  └────────────────────────────────────────────────────────┘    │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │                  Services Layer                         │    │
+│  │  - authService  - problemService  - apiClient          │    │
+│  └────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔐 **Security Architecture**
+## Data Flow
 
-### **1. Authentication Flow**
+### 1. User Authentication Flow
+
+```
+User → Login Form → authService.login()
+                         ↓
+                    POST /api/v1/users/login
+                         ↓
+                    UserController
+                         ↓
+                    UserService.authenticate()
+                         ↓
+                    UserRepository.findByUsername()
+                         ↓
+                    BCrypt.checkPassword()
+                         ↓
+                    JwtUtil.generateToken()
+                         ↓
+                    Return JWT + User Data
+                         ↓
+                    Store in localStorage
+                         ↓
+                    Redirect to Problems Page
+```
+
+### 2. Code Submission Flow
+
+```
+User → Code Editor → Submit Button
+                         ↓
+                    problemService.submitSolution()
+                         ↓
+                    POST /api/v1/submissions
+                    (JWT in Authorization header)
+                         ↓
+                    JwtAuthenticationFilter
+                    (Validate token, extract user)
+                         ↓
+                    SubmissionController.submitSolution()
+                         ↓
+                    SubmissionService.submitSolution()
+                    (Create submission record)
+                         ↓
+                    CodeExecutionService.executeCode()
+                         ↓
+                    ┌─────────────────────────────────┐
+                    │  For each test case:            │
+                    │  1. Create temp directory       │
+                    │  2. Write code file             │
+                    │  3. Write input file            │
+                    │  4. Create Docker container     │
+                    │  5. Start container             │
+                    │  6. Wait for completion         │
+                    │  7. Capture output              │
+                    │  8. Compare with expected       │
+                    │  9. Clean up container          │
+                    └─────────────────────────────────┘
+                         ↓
+                    Aggregate results
+                         ↓
+                    Update submission status
+                         ↓
+                    Return ExecutionResult
+                         ↓
+                    Display result to user
+                    (Confetti if ACCEPTED)
+```
+
+### 3. Problem Browsing Flow
+
+```
+User → Problems Page → problemService.getAllProblems()
+                            ↓
+                       GET /api/v1/problems
+                            ↓
+                       ProblemController.getAllProblems()
+                            ↓
+                       ProblemService.getAllProblems()
+                            ↓
+                       ProblemRepository.findAll()
+                            ↓
+                       Map to ProblemDTO
+                            ↓
+                       Return paginated list
+                            ↓
+                       Render problem cards
+```
+
+---
+
+## Security Architecture
+
+### Authentication Flow
+
 ```
 ┌──────────────┐
-│   Browser    │
+│    Client    │
 └──────┬───────┘
-       │ 1. POST /api/auth/login
-       │    { username, password }
+       │ 1. POST /login (username, password)
        ▼
-┌──────────────────────────────────────┐
-│  UserController.login()              │
-│  • Validates credentials             │
-│  • Calls AuthService                 │
-└──────┬───────────────────────────────┘
-       │
+┌──────────────────────┐
+│  UserController      │
+└──────┬───────────────┘
+       │ 2. Authenticate
        ▼
-┌──────────────────────────────────────┐
-│  AuthService.authenticate()          │
-│  • Fetches user from DB              │
-│  • BCrypt.checkPassword()            │
-│  • If valid: generate JWT            │
-└──────┬───────────────────────────────┘
-       │
+┌──────────────────────┐
+│  UserService         │
+│  - Load user         │
+│  - Verify password   │
+└──────┬───────────────┘
+       │ 3. Generate JWT
        ▼
-┌──────────────────────────────────────┐
-│  JwtTokenProvider.generateToken()    │
-│  • Claims: userId, username, roles   │
-│  • Sign with HMAC-SHA256             │
-│  • Expiration: 24 hours              │
-└──────┬───────────────────────────────┘
-       │
-       │ 2. Response: { token: "eyJ..." }
+┌──────────────────────┐
+│  JwtUtil             │
+│  - Create token      │
+│  - Sign with secret  │
+└──────┬───────────────┘
+       │ 4. Return token
        ▼
 ┌──────────────┐
-│   Browser    │
-│  localStorage.setItem('token', ...)  │
+│    Client    │
+│  Store token │
 └──────────────┘
 ```
 
-### **2. Authorization Flow**
+### Request Authorization Flow
+
 ```
 ┌──────────────┐
-│   Browser    │
+│    Client    │
 └──────┬───────┘
-       │ 3. GET /api/problems
-       │    Headers: { Authorization: "Bearer eyJ..." }
+       │ 1. Request with JWT in header
        ▼
-┌────────────────────────────────────────┐
-│  JwtAuthenticationFilter               │
-│  • Extract token from header           │
-│  • Validate signature                  │
-│  • Check expiration                    │
-│  • Extract userId                      │
-│  • Set SecurityContext                 │
-└────────┬───────────────────────────────┘
-         │
-         ▼
-┌────────────────────────────────────────┐
-│  ProblemController.getAllProblems()    │
-│  • SecurityContext has userId          │
-│  • Process request                     │
-│  • Return response                     │
-└────────────────────────────────────────┘
+┌──────────────────────────┐
+│ JwtAuthenticationFilter  │
+│  - Extract token         │
+│  - Validate signature    │
+│  - Check expiration      │
+└──────┬───────────────────┘
+       │ 2. Load user details
+       ▼
+┌──────────────────────────┐
+│ UserDetailsService       │
+│  - Load from database    │
+└──────┬───────────────────┘
+       │ 3. Set authentication
+       ▼
+┌──────────────────────────┐
+│ SecurityContext          │
+│  - Store authentication  │
+└──────┬───────────────────┘
+       │ 4. Proceed to controller
+       ▼
+┌──────────────────────────┐
+│  Controller              │
+│  - Access authenticated  │
+│    user from context     │
+└──────────────────────────┘
 ```
 
-### **3. Docker Isolation**
-```
-┌─────────────────────────────────────────┐
-│  Host Machine (Backend Server)         │
-│  ┌───────────────────────────────────┐  │
-│  │  CodeExecutionService (JVM)       │  │
-│  │  • Creates container               │  │
-│  │  • Enforces limits                 │  │
-│  │  • Collects output                 │  │
-│  └───────────┬───────────────────────┘  │
-│              │ Docker Java SDK          │
-│  ┌───────────▼───────────────────────┐  │
-│  │  Docker Engine                     │  │
-│  │  ┌──────────────────────────────┐  │  │
-│  │  │  Isolated Container          │  │  │
-│  │  │  ┌────────────────────────┐  │  │  │
-│  │  │  │  User Code Execution   │  │  │  │
-│  │  │  │  - No network access   │  │  │  │
-│  │  │  │  - No host filesystem  │  │  │  │
-│  │  │  │  - CPU: 50%            │  │  │  │
-│  │  │  │  - RAM: 256MB          │  │  │  │
-│  │  │  │  - Timeout: 5s         │  │  │  │
-│  │  │  └────────────────────────┘  │  │  │
-│  │  └──────────────────────────────┘  │  │
-│  └─────────────────────────────────────┘  │
-└─────────────────────────────────────────┘
-```
+### Code Execution Security
 
-**Security Guarantees:**
-- ✅ User code cannot access host filesystem
-- ✅ User code cannot make network requests
-- ✅ User code cannot consume unlimited CPU
-- ✅ User code cannot consume unlimited memory
-- ✅ User code cannot run forever (5s timeout)
-- ✅ User code cannot see other users' submissions
+```
+┌──────────────────────────────────────────────────────────┐
+│                   Security Layers                         │
+├──────────────────────────────────────────────────────────┤
+│                                                           │
+│  Layer 1: Input Validation                               │
+│  - Code size limit (50KB)                                │
+│  - Language validation                                   │
+│  - Problem ID validation                                 │
+│                                                           │
+│  Layer 2: Docker Isolation                               │
+│  - Separate container per execution                      │
+│  - No network access                                     │
+│  - No host filesystem access                             │
+│  - Non-root user                                         │
+│                                                           │
+│  Layer 3: Resource Limits                                │
+│  - CPU: 50% of single core                               │
+│  - Memory: 256MB                                         │
+│  - Execution timeout: 5 seconds                          │
+│  - Disk I/O limits                                       │
+│                                                           │
+│  Layer 4: Cleanup                                        │
+│  - Container removed after execution                     │
+│  - Temp files deleted                                    │
+│  - No persistent storage                                 │
+│                                                           │
+└──────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 🗄️ **Database Schema**
-```sql
+## Deployment Architecture
+
+### Development Environment
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Developer Machine                     │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌──────────────┐    ┌──────────────┐                  │
+│  │   Frontend   │    │   Backend    │                  │
+│  │  npm run dev │    │  mvn spring  │                  │
+│  │  Port: 5173  │    │  Port: 8081  │                  │
+│  └──────────────┘    └──────────────┘                  │
+│                                                          │
+│  ┌──────────────┐    ┌──────────────┐                  │
+│  │  PostgreSQL  │    │    Docker    │                  │
+│  │  Port: 5432  │    │   Desktop    │                  │
+│  └──────────────┘    └──────────────┘                  │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Production Environment (Recommended)
+
+```
 ┌─────────────────────────────────────────────────────────────┐
-│  users                                                      │
-├─────────────────────────────────────────────────────────────┤
-│  id                BIGSERIAL PRIMARY KEY                    │
-│  username          VARCHAR(50) UNIQUE NOT NULL              │
-│  email             VARCHAR(100) UNIQUE NOT NULL             │
-│  password_hash     VARCHAR(255) NOT NULL                    │
-│  rating            INTEGER DEFAULT 1500                     │
-│  problems_solved   INTEGER DEFAULT 0                        │
-│  role              VARCHAR(20) DEFAULT 'USER'               │
-│  created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP      │
-│  last_login_at     TIMESTAMP                                │
-└─────────────────────────────────────────────────────────────┘
-             │ 1
-             │
-             │ N
-┌────────────▼────────────────────────────────────────────────┐
-│  submissions                                                │
-├─────────────────────────────────────────────────────────────┤
-│  id                BIGSERIAL PRIMARY KEY                    │
-│  user_id           BIGINT REFERENCES users(id)              │
-│  problem_id        BIGINT REFERENCES problems(id)           │
-│  contest_id        BIGINT REFERENCES contests(id) NULL      │
-│  code              TEXT NOT NULL                            │
-│  language          VARCHAR(20) NOT NULL                     │
-│  status            VARCHAR(50)                              │
-│  execution_time_ms INTEGER                                  │
-│  memory_used_kb    INTEGER                                  │
-│  score_awarded     INTEGER DEFAULT 0                        │
-│  error_message     TEXT                                     │
-│  submitted_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP      │
-└─────────────────────────────────────────────────────────────┘
-             │ N
-             │
-             │ 1
-┌────────────▼────────────────────────────────────────────────┐
-│  problems                                                   │
-├─────────────────────────────────────────────────────────────┤
-│  id                   BIGSERIAL PRIMARY KEY                 │
-│  title                VARCHAR(200) NOT NULL                 │
-│  slug                 VARCHAR(200) UNIQUE NOT NULL          │
-│  description          TEXT                                  │
-│  difficulty           VARCHAR(20)                           │
-│  tags                 TEXT                                  │
-│  hints                TEXT                                  │
-│  base_score           INTEGER                               │
-│  acceptance_rate      DECIMAL(5,2)                          │
-│  total_submissions    INTEGER DEFAULT 0                     │
-│  successful_submissions INTEGER DEFAULT 0                   │
-│  created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP   │
-└─────────────────────────────────────────────────────────────┘
-             │ 1
-             │
-             │ N
-┌────────────▼────────────────────────────────────────────────┐
-│  test_cases                                                 │
-├─────────────────────────────────────────────────────────────┤
-│  id                BIGSERIAL PRIMARY KEY                    │
-│  problem_id        BIGINT REFERENCES problems(id)           │
-│  input             TEXT NOT NULL                            │
-│  expected_output   TEXT NOT NULL                            │
-│  is_hidden         BOOLEAN DEFAULT FALSE                    │
-│  order_index       INTEGER                                  │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│  contests                                                   │
-├─────────────────────────────────────────────────────────────┤
-│  id                BIGSERIAL PRIMARY KEY                    │
-│  title             VARCHAR(200) NOT NULL                    │
-│  description       TEXT                                     │
-│  start_time        TIMESTAMP NOT NULL                       │
-│  end_time          TIMESTAMP NOT NULL                       │
-│  is_active         BOOLEAN DEFAULT FALSE                    │
-│  created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP      │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Relationships:**
-- One User → Many Submissions
-- One Problem → Many Submissions
-- One Problem → Many Test Cases
-- One Contest → Many Submissions (optional)
-
----
-
-## 🎨 **Design Patterns Used**
-
-### **1. Repository Pattern**
-```java
-// Interface (Domain Layer)
-public interface ProblemRepository {
-    Optional<Problem> findById(Long id);
-    List<Problem> findAll();
-}
-
-// Implementation (Infrastructure Layer)
-public interface ProblemRepositoryJPA 
-    extends JpaRepository<Problem, Long>, ProblemRepository {
-    // Spring Data JPA auto-implements
-}
-```
-
-### **2. Service Layer Pattern**
-```java
-@Service
-public class ProblemService {
-    private final ProblemRepository problemRepository;
-    
-    public ProblemDTO getProblemById(Long id) {
-        Problem problem = problemRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Problem not found"));
-        return ProblemMapper.toDTO(problem);
-    }
-}
-```
-
-### **3. DTO Pattern**
-```java
-// Prevents exposing internal entities to clients
-public class ProblemDTO {
-    private Long id;
-    private String title;
-    private String difficulty;
-    // No sensitive fields like database IDs
-}
-```
-
-### **4. Strategy Pattern (Implicit)**
-```java
-// Different execution strategies per language
-if ("JAVA".equals(language)) {
-    // Java execution strategy
-} else if ("PYTHON".equals(language)) {
-    // Python execution strategy
-}
-```
-
-### **5. Factory Pattern (Implicit)**
-```java
-// Docker container creation
-CreateContainerResponse container = dockerClient
-    .createContainerCmd(imageName)
-    .withHostConfig(hostConfig)
-    .exec();
+│                      Load Balancer                           │
+│                    (NGINX / AWS ALB)                         │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+        ┌────────────┴────────────┐
+        │                         │
+┌───────▼────────┐       ┌────────▼───────┐
+│   Frontend     │       │    Backend     │
+│   (Static)     │       │   (Docker)     │
+│   - NGINX      │       │   - Spring     │
+│   - CDN        │       │   - Multiple   │
+│                │       │     instances  │
+└────────────────┘       └────────┬───────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+            ┌───────▼────────┐         ┌────────▼───────┐
+            │   PostgreSQL   │         │     Docker     │
+            │   (RDS/Cloud)  │         │     Engine     │
+            │   - Replicas   │         │   - Swarm/K8s  │
+            │   - Backups    │         │   - Scaling    │
+            └────────────────┘         └────────────────┘
 ```
 
 ---
 
-## 🤔 **Technology Decisions**
+## Technology Stack
 
-### **Why Spring Boot?**
-**Alternatives Considered:** Express.js, Django, Flask  
-**Decision:** Spring Boot  
-**Reasons:**
-- Mature ecosystem with Spring Security, Spring Data
-- Built-in dependency injection
-- Strong enterprise adoption (good for resume)
-- Excellent documentation
-- Production-ready features (actuator, metrics)
+### Backend Technologies
 
-### **Why PostgreSQL?**
-**Alternatives Considered:** MySQL, MongoDB  
-**Decision:** PostgreSQL  
-**Reasons:**
-- ACID compliance (critical for submission integrity)
-- JSON support (flexible test case storage)
-- Strong consistency guarantees
-- Better for relational data (users ↔ submissions ↔ problems)
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| Framework | Spring Boot 3.2.1 | Application framework |
+| Language | Java 17 | Programming language |
+| Security | Spring Security 6.x | Authentication & authorization |
+| Database | PostgreSQL 15+ | Data persistence |
+| ORM | Spring Data JPA | Database abstraction |
+| Connection Pool | HikariCP | Database connections |
+| JWT | jjwt 0.12.3 | Token generation |
+| Docker | Docker Java SDK 3.4.0 | Container management |
+| Build Tool | Maven 3.9+ | Dependency management |
+| Validation | Jakarta Validation | Input validation |
+| Logging | SLF4J + Logback | Application logging |
 
-### **Why Docker?**
-**Alternatives Considered:** VM, chroot, process isolation  
-**Decision:** Docker  
-**Reasons:**
-- Lightweight vs VMs
-- Resource limiting built-in (cgroups)
-- Consistent environment across deployments
-- Easy to add new language support (new Dockerfile)
-- Industry standard
+### Frontend Technologies
 
-### **Why React?**
-**Alternatives Considered:** Angular, Vue, Svelte  
-**Decision:** React  
-**Reasons:**
-- Largest ecosystem (libraries, jobs)
-- Virtual DOM (performance)
-- Component reusability
-- Hooks API (modern, clean)
-- Strong community support
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| Framework | React 18 | UI framework |
+| Build Tool | Vite | Fast build tool |
+| Styling | Tailwind CSS 3.x | Utility-first CSS |
+| Routing | React Router 6.x | Client-side routing |
+| HTTP Client | Axios | API communication |
+| Code Editor | Monaco Editor | Code editing |
+| State | Context API | State management |
+| Forms | React Hook Form | Form handling |
 
-### **Why Clean Architecture?**
-**Alternatives Considered:** MVC, Layered Architecture  
-**Decision:** Clean Architecture  
-**Reasons:**
-- Framework independence (can swap Spring easily)
-- Testable business logic
-- Clear boundaries between layers
-- Easier to maintain as project grows
-- Demonstrates system design understanding
+### DevOps & Infrastructure
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| Containerization | Docker 20+ | Application containers |
+| Database | PostgreSQL 15+ | Data storage |
+| Version Control | Git | Source control |
+| CI/CD | GitHub Actions (planned) | Automation |
+| Monitoring | Actuator | Health checks |
 
 ---
 
-## 📈 **Scalability Considerations**
+## Design Patterns Used
 
-### **Current Bottlenecks:**
-1. **Docker Container Creation** - 1-2s per submission
-2. **Sequential Test Case Execution** - N × execution time
-3. **No Caching** - Every submission recompiles
-4. **Single Server** - No horizontal scaling
-
-### **Future Optimizations:**
-1. **Container Pooling** - Reuse warm containers
-2. **Parallel Test Execution** - Run multiple tests concurrently
-3. **Compilation Caching** - Cache compiled bytecode
-4. **Queue System** - RabbitMQ/Kafka for async processing
-5. **Load Balancing** - Multiple backend instances
-6. **CDN** - Static asset delivery
-7. **Redis** - Leaderboard caching
+1. **Clean Architecture** - Separation of concerns across layers
+2. **Repository Pattern** - Data access abstraction
+3. **DTO Pattern** - Data transfer between layers
+4. **Factory Pattern** - Docker container creation
+5. **Strategy Pattern** - Multi-language execution
+6. **Singleton Pattern** - Docker client instance
+7. **Builder Pattern** - Complex object construction
+8. **Interceptor Pattern** - Request/response logging
+9. **Filter Pattern** - JWT authentication
+10. **Observer Pattern** - React state management
 
 ---
 
-## 🎯 **Architecture Benefits**
+## Performance Considerations
 
-| Benefit | How BrewAlgo Achieves It |
-|---------|-------------------------|
-| **Testability** | Domain layer has no dependencies, can unit test easily |
-| **Maintainability** | Clear layer separation, easy to find code |
-| **Flexibility** | Can swap PostgreSQL for MongoDB without changing business logic |
-| **Security** | Docker isolation, JWT auth, input validation at multiple layers |
-| **Performance** | Resource limits prevent abuse, async processing |
-| **Scalability** | Stateless design (JWT), can add more servers |
+### Backend Optimizations
+
+- Connection pooling with HikariCP
+- Database query optimization with indexes
+- Lazy loading for entity relationships
+- Pagination for large result sets
+- Async processing for code execution
+- Caching for frequently accessed data
+
+### Frontend Optimizations
+
+- Code splitting with React.lazy()
+- Memoization with useMemo/useCallback
+- Virtual scrolling for large lists
+- Debouncing for search inputs
+- Image optimization
+- Bundle size optimization
+
+### Docker Optimizations
+
+- Container reuse (planned)
+- Image caching
+- Multi-stage builds
+- Minimal base images
+- Resource limit tuning
 
 ---
 
-## 📚 **References & Learning Resources**
+## Scalability Considerations
 
-- **Clean Architecture:** *Robert C. Martin* (Uncle Bob)
-- **Spring Boot Docs:** https://spring.io/projects/spring-boot
-- **Docker Java SDK:** https://github.com/docker-java/docker-java
-- **React Docs:** https://react.dev/
-- **PostgreSQL Docs:** https://www.postgresql.org/docs/
+### Horizontal Scaling
 
-Document Version: 1.0.0
-Author: Ashhar Ahmad Khan
-Last Updated: January 15, 2026
-This architecture is designed for learning, demonstration, and interview discussion. Production deployment would require additional considerations (monitoring, logging, disaster recovery).
+- Stateless backend (JWT tokens)
+- Load balancer distribution
+- Database read replicas
+- Container orchestration (K8s)
+
+### Vertical Scaling
+
+- Increase container resources
+- Database performance tuning
+- Connection pool sizing
+- JVM heap optimization
+
+### Future Enhancements
+
+- Redis caching layer
+- Message queue for submissions
+- Container pooling
+- CDN for static assets
+- Database sharding
+
+---
+
+**Last Updated:** March 1, 2026  
+**Author:** Ashhar Ahmad Khan  
+**Version:** 1.0.0
