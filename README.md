@@ -161,8 +161,4 @@ BrewAlgo/
 
 ## Author
 
-Ashhar Ahmad Khan
-Enrollment No. 2023-310-059
-BTech CSE, Jamia Hamdard University
-
-itzashhar@gmail.com
+Ashhar Ahmad Khan - itzashhar@gmail.com
