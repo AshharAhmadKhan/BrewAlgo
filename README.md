@@ -1,358 +1,168 @@
-<div align="center">
-
 # BrewAlgo
 
-### Enterprise-Grade Online Coding Judge Platform
+Competitive programming platforms like LeetCode exist, but building one from scratch teaches you things using them never will. That's why I built BrewAlgo — a full-stack online judge where you can solve DSA problems, submit code, and see it run in real time.
 
-[![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://openjdk.java.net/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
-[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg)](https://www.docker.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791.svg)](https://www.postgresql.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-**A production-ready competitive programming platform with secure Docker-isolated code execution, comprehensive test suites, and enterprise-grade architecture.**
-
-[Features](#features) • [Architecture](#architecture) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Contributing](CONTRIBUTING.md) • [Security](SECURITY.md)
-
-</div>
+This is my personal project, built during my BTech CSE at Jamia Hamdard University.
 
 ---
 
-## Overview
+## What it does
 
-BrewAlgo is a full-stack online coding judge platform designed to provide a secure, scalable environment for competitive programming. Built with Clean Architecture principles, it demonstrates enterprise-level software engineering practices including Docker containerization, JWT authentication, comprehensive testing, and production-ready deployment strategies.
+BrewAlgo is an online coding judge. You browse problems, write code in the browser, submit it, and the platform runs it against test cases and tells you if you passed.
 
-### Key Highlights
+The two things I'm most proud of:
 
-- **Secure Code Execution**: Docker-isolated containers with resource limits (CPU, memory, timeout)
-- **Multi-Language Support**: Java and Python with extensible architecture for additional languages
-- **Clean Architecture**: 4-layer architecture (Domain, Application, Infrastructure, Presentation)
-- **Comprehensive Testing**: 90+ unit and integration tests with 85%+ code coverage
-- **Production-Ready**: Rate limiting, audit logging, caching, async processing, OpenAPI documentation
-- **100 Curated Problems**: Elite DSA problem set covering arrays, strings, trees, graphs, DP, and more
+**Secure code execution** — your code runs inside an isolated Docker container with CPU, memory, and time limits. It never touches the host machine.
+
+**Clean Architecture** — the backend is structured in four layers (Domain, Application, Infrastructure, Presentation) so the business logic stays completely independent of frameworks and databases.
 
 ---
 
 ## Features
 
-### Core Functionality
-- ✅ **User Authentication & Authorization** - JWT-based secure authentication with role-based access control
-- ✅ **Problem Management** - CRUD operations for coding problems with difficulty levels and tags
-- ✅ **Code Submission & Evaluation** - Real-time code execution with detailed feedback
-- ✅ **Multi-Language Support** - Java and Python with extensible executor framework
-- ✅ **Test Case Validation** - Automated testing against multiple test cases with instant feedback
-- ✅ **Leaderboard System** - Real-time rankings based on solved problems and accuracy
-- ✅ **Contest Management** - Time-bound contests with participant tracking
-
-### Security & Performance
-- 🔒 **Docker Isolation** - All code runs in isolated containers, never on host
-- 🔒 **Resource Limits** - CPU (50%), Memory (256MB), Timeout (5s) per execution
-- 🔒 **Input Sanitization** - XSS prevention, SQL injection protection
-- 🔒 **Rate Limiting** - API throttling to prevent abuse (100 req/min per user)
-- ⚡ **Caching** - Redis-based caching for frequently accessed data
-- ⚡ **Async Processing** - Non-blocking code execution with thread pools
-
-### Developer Experience
-- 📚 **OpenAPI Documentation** - Interactive API docs at `/swagger-ui.html`
-- 📊 **Audit Logging** - Comprehensive activity tracking for compliance
-- 🔍 **Request Tracing** - Unique request IDs for debugging
-- 🧪 **Comprehensive Tests** - 90+ tests covering unit, integration, and repository layers
+- User registration and login with JWT authentication
+- 100+ curated DSA problems across Easy, Medium, and Hard
+- Code submission in Java and Python
+- Real-time execution with detailed feedback (Accepted, Wrong Answer, TLE, Runtime Error, Compilation Error)
+- Global leaderboard ranked by rating
+- User profile with submission history and skill breakdown
+- Rate limiting, audit logging, and request tracing
 
 ---
 
-## Architecture
+## How to set it up
 
-BrewAlgo follows **Clean Architecture** principles with clear separation of concerns:
+You'll need Java 17, Node.js 18, PostgreSQL 15, Docker Desktop, and Maven 3.9.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Presentation Layer                       │
-│              (Controllers, DTOs, Exception Handlers)         │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────────┐
-│                    Application Layer                         │
-│           (Services, Business Logic, Use Cases)              │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────────┐
-│                      Domain Layer                            │
-│        (Entities, Repositories, Domain Exceptions)           │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────────┐
-│                  Infrastructure Layer                        │
-│    (Security, Persistence, External Services, Config)        │
-└──────────────────────────────────────────────────────────────┘
+**1. Clone the repo**
+```bash
+git clone https://github.com/AshharAhmadKhan/BrewAlgo.git
+cd BrewAlgo
 ```
 
-### Code Execution Flow
-
-```
-User Submits Code
-      │
-      ▼
-JWT Authentication
-      │
-      ▼
-Rate Limit Check
-      │
-      ▼
-Submission Service
-      │
-      ▼
-Code Execution Service
-      │
-      ├─► Write code to temp file
-      ├─► Create Docker container (resource-limited)
-      ├─► Execute against test cases
-      ├─► Capture stdout/stderr
-      ├─► Compare with expected output
-      └─► Return verdict (ACCEPTED/WRONG_ANSWER/TLE/etc.)
-      │
-      ▼
-Store Submission in PostgreSQL
-      │
-      ▼
-Return Result to User
+**2. Create the database**
+```bash
+psql -U postgres
+CREATE DATABASE brewalgo;
+\q
 ```
 
-For detailed architecture documentation, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+**3. Configure the backend**
 
----
+Open `backend/src/main/resources/application.properties` and update:
+```properties
+spring.datasource.password=your_postgres_password
+jwt.secret=your_secret_key_here
+```
 
-## Tech Stack
+**4. Build the Docker executor images**
+```bash
+cd docker/java-executor
+docker build -t brewalgo-java-executor:latest .
 
-### Backend
-- **Framework**: Spring Boot 3.2.1
-- **Language**: Java 17
-- **Security**: Spring Security with JWT
-- **Database**: PostgreSQL 15
-- **ORM**: Spring Data JPA
-- **Containerization**: Docker Java SDK
-- **Caching**: Spring Cache (Caffeine)
-- **API Docs**: SpringDoc OpenAPI 3
-- **Testing**: JUnit 5, Mockito, TestContainers
+cd ../python-executor
+docker build -t brewalgo-python-executor:latest .
+```
 
-### Frontend
-- **Framework**: React 18
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **HTTP Client**: Axios
-- **Code Editor**: Monaco Editor (VS Code editor)
-- **Markdown**: ReactMarkdown with syntax highlighting
-
-### DevOps
-- **Containerization**: Docker & Docker Compose
-- **Execution Isolation**: Custom Docker images per language
-- **Database**: PostgreSQL with connection pooling
-- **Logging**: SLF4J with Logback
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- Java 17+
-- Node.js 18+
-- PostgreSQL 15+
-- Docker Desktop
-- Maven 3.8+
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/AshharAhmadKhan/BrewAlgo.git
-   cd BrewAlgo
-   ```
-
-2. **Database Setup**
-   ```bash
-   psql -U postgres
-   CREATE DATABASE brewalgo;
-   \q
-   ```
-
-3. **Backend Setup**
-   ```bash
-   cd backend
-   
-   # Update database credentials in src/main/resources/application.properties
-   # spring.datasource.username=postgres
-   # spring.datasource.password=your_password
-   
-   # Run the application
-   mvn spring-boot:run
-   ```
-   Backend runs on `http://localhost:8081`
-
-4. **Build Docker Executor Images**
-   ```bash
-   # Java Executor
-   cd docker/java-executor
-   docker build -t brewalgo-java-executor:latest .
-   
-   # Python Executor
-   cd ../python-executor
-   docker build -t brewalgo-python-executor:latest .
-   ```
-
-5. **Frontend Setup**
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-   Frontend runs on `http://localhost:5173`
-
-6. **Access the Application**
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:8081
-   - API Documentation: http://localhost:8081/swagger-ui.html
-
-### Running Tests
-
+**5. Start the backend**
 ```bash
 cd backend
-mvn test
+mvn spring-boot:run
 ```
 
+**6. Start the frontend**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend runs at `http://localhost:5173`, backend at `http://localhost:8081`.
+
 ---
 
-## Documentation
+## How the code execution works
 
-- [Architecture Documentation](docs/ARCHITECTURE.md) - Detailed system design and component diagrams
-- [Contributing Guidelines](CONTRIBUTING.md) - How to contribute to the project
-- [Security Policy](SECURITY.md) - Security best practices and vulnerability reporting
-- [Changelog](CHANGELOG.md) - Version history and release notes
+When you submit code, here's what actually happens:
+
+1. The backend writes your code to a temporary file
+2. It creates a Docker container with strict limits — 256MB memory, 50% of one CPU core, 5 second timeout
+3. The container compiles and runs your code against each test case
+4. Output is captured and compared to the expected answer
+5. The container is destroyed and the temp files are deleted
+6. You get a verdict
+
+The container has no network access and no access to the host filesystem. If your code tries to do something malicious, it just fails inside the container.
 
 ---
 
-## Project Structure
+## Why Docker for execution
+
+The obvious answer is security. But there's more to it.
+
+Every submission gets a consistent environment regardless of what's installed on the server. The resource limits are enforced at the OS level, not by the application. And the architecture makes it easy to add new languages — you just write a new Dockerfile.
+
+The tradeoff is speed. Creating a new container for each test case adds about 1-2 seconds of overhead. That's a known limitation and something I'd fix with container pooling if I continued developing this.
+
+---
+
+## Tech stack
+
+**Backend** — Spring Boot 3.2.1, Java 17, Spring Security with JWT, PostgreSQL, Spring Data JPA, Docker Java SDK
+
+**Frontend** — React 18, Vite, Tailwind CSS, Monaco Editor, Axios
+
+**Infrastructure** — Docker, Docker Compose, HikariCP connection pooling
+
+---
+
+## Project structure
 
 ```
 BrewAlgo/
 ├── backend/
-│   ├── src/main/java/com/brewalgo/
-│   │   ├── domain/                 # Entities, repositories, domain logic
-│   │   ├── application/            # Services, DTOs, business logic
-│   │   ├── infrastructure/         # Security, persistence, external services
-│   │   └── presentation/           # Controllers, exception handlers
-│   ├── src/main/resources/
-│   │   ├── application.properties  # Configuration
-│   │   └── messages.properties     # I18n messages
-│   └── src/test/                   # Unit & integration tests
-│
+│   └── src/main/java/com/brewalgo/
+│       ├── domain/          # Entities, repositories, exceptions
+│       ├── application/     # Services, DTOs, business logic
+│       ├── infrastructure/  # Security, persistence, config
+│       └── presentation/    # Controllers
 ├── frontend/
-│   ├── src/
-│   │   ├── components/             # Reusable React components
-│   │   ├── pages/                  # Page components
-│   │   ├── services/               # API service layer
-│   │   └── utils/                  # Utility functions
-│   └── public/                     # Static assets
-│
+│   └── src/
+│       ├── components/      # Reusable UI components
+│       ├── pages/           # Page components
+│       ├── services/        # API layer
+│       └── context/         # Auth and toast state
 ├── docker/
-│   ├── java-executor/              # Java execution environment
-│   └── python-executor/            # Python execution environment
-│
-├── docs/                           # Documentation
-└── docker-compose.yml              # Docker orchestration
+│   ├── java-executor/       # Java execution environment
+│   └── python-executor/     # Python execution environment
+└── docs/                    # Architecture, API, setup guides
 ```
 
 ---
 
-## API Endpoints
+## What's not built yet
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login and receive JWT token
-
-### Problems
-- `GET /api/problems` - List all problems
-- `GET /api/problems/{id}` - Get problem by ID
-- `GET /api/problems/slug/{slug}` - Get problem by slug
-- `POST /api/problems` - Create new problem (Admin)
-- `PUT /api/problems/{id}` - Update problem (Admin)
-- `DELETE /api/problems/{id}` - Delete problem (Admin)
-
-### Submissions
-- `POST /api/submissions` - Submit code for evaluation
-- `GET /api/submissions/user/{userId}` - Get user's submissions
-- `GET /api/submissions/{id}` - Get submission details
-
-### Leaderboard
-- `GET /api/leaderboard` - Get global leaderboard
-- `GET /api/leaderboard/contest/{contestId}` - Get contest leaderboard
-
-For complete API documentation, visit `/swagger-ui.html` when running the backend.
+- Contest system (the backend is ready, the UI just shows "coming soon")
+- WebSocket for real-time updates
+- More languages (C++, JavaScript)
+- Admin dashboard for managing problems
+- Redis caching layer
+- Container pooling for faster execution
 
 ---
 
-## Security
+## Docs
 
-BrewAlgo implements multiple layers of security:
-
-- **Authentication**: JWT-based stateless authentication
-- **Authorization**: Role-based access control (USER, ADMIN)
-- **Password Security**: BCrypt hashing with salt
-- **Docker Isolation**: Code execution in isolated containers
-- **Resource Limits**: CPU, memory, and timeout constraints
-- **Input Validation**: Comprehensive input sanitization
-- **SQL Injection Prevention**: Parameterized queries
-- **XSS Protection**: Output encoding and CSP headers
-- **Rate Limiting**: API throttling per user
-- **Audit Logging**: Complete activity tracking
-
-For detailed security information, see [SECURITY.md](SECURITY.md).
-
----
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
-
-- Code of Conduct
-- Development workflow
-- Coding standards
-- Commit message guidelines
-- Pull request process
-
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- [Architecture](docs/ARCHITECTURE.md) — system design, data flow, security layers
+- [API Reference](docs/API.md) — all endpoints with request/response examples
+- [Setup Guide](docs/SETUP.md) — detailed setup with troubleshooting
 
 ---
 
 ## Author
 
-**Ashhar Ahmad Khan**
+Ashhar Ahmad Khan
+Enrollment No. 2023-310-059
+BTech CSE, Jamia Hamdard University
 
-- Email: itzashhar@gmail.com
-- GitHub: [@AshharAhmadKhan](https://github.com/AshharAhmadKhan)
-- LinkedIn: [Ashhar Ahmad Khan](https://linkedin.com/in/ashhar-ahmad-khan)
-
----
-
-## Acknowledgments
-
-Built as a learning project to understand:
-- Docker containerization and resource isolation
-- Clean Architecture principles in practice
-- Secure code execution systems
-- Enterprise-level Spring Boot applications
-- Full-stack development with React and Spring Boot
-
----
-
-<div align="center">
-
-**If this project helped you learn something new, please consider giving it a ⭐️**
-
-[Report Bug](https://github.com/AshharAhmadKhan/BrewAlgo/issues) • [Request Feature](https://github.com/AshharAhmadKhan/BrewAlgo/issues)
-
-</div>
+itzashhar@gmail.com
